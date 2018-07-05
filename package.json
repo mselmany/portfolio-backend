@@ -1,0 +1,44 @@
+{
+  "name": "portfolio-backend",
+  "version": "0.1.0",
+  "description": "Back-end API for portfolio app integrated with social media accounts, resumes, built-in articles and comments...",
+  "main": "index.js",
+  "author": "numano <mselmany@hotmail.com>",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://bitbucket.org/mselmany/portfolio-backend#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://mselmany@bitbucket.org/mselmany/portfolio-backend.git"
+  },
+  "keywords": [
+    "backend",
+    "nodejs",
+    "portfolioapp",
+    "api",
+    "mongodb",
+    "graphql"
+  ],
+  "scripts": {
+    "clean": "rm -rf ./dist",
+    "build": "npm run clean && webpack",
+    "start": "npm run clean && node-hot --config webpack.config.js",
+    "start-forked": "npm run clean && node-hot --config webpack.config.js --fork"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "node-hot-loader": "^1.8.6",
+    "webpack": "^4.15.1",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "engines": {
+    "node": ">= 8.0.0",
+    "npm": ">= 4.0.0"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": false,
+      "node": true
+    }
+  }
+}
