@@ -1,4 +1,4 @@
-import app from "./app"; // configuring express app, e.g. routes and logic
+import app from "./src"; // configuring express app, e.g. routes and logic
 
 function startServer() {
   return new Promise((resolve, reject) => {

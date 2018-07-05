@@ -7,7 +7,7 @@ export default {
   mode: "development",
   devtool: "sourcemap",
   entry: {
-    main: "./index.js"
+    server: "./index.js"
   },
   output: {
     path: path.join(__dirname, "dist"),
