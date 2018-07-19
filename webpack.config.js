@@ -1,11 +1,12 @@
 import webpack from "webpack";
 import nodeExternals from "webpack-node-externals";
+import dotenv from "dotenv-webpack";
 import path from "path";
+import { isDev, isProd } from "./src/helpers";
 
-export default {
+let config = {
   target: "node",
-  mode: "development",
-  devtool: "sourcemap",
+  mode: process.env.NODE_ENV,
   entry: {
     server: "./index.js"
   },
@@ -14,8 +15,27 @@ export default {
     filename: "[name].js"
   },
   resolve: {
-    extensions: [".js"]
+    extensions: [".js"],
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@root": path.resolve(__dirname, ".")
+    }
   },
   externals: [nodeExternals()],
-  plugins: [new webpack.HotModuleReplacementPlugin()]
+  plugins: [
+    new dotenv({
+      path: !isProd ? path.resolve(__dirname, "./.env.development") : undefined
+    })
+  ],
+  stats: {
+    all: false,
+    timings: true
+  }
 };
+
+if (isDev) {
+  config.devtool = "cheap-eval-source-map";
+  config.plugins.push(new webpack.HotModuleReplacementPlugin());
+}
+
+export default config;

@@ -21,12 +21,26 @@
   ],
   "scripts": {
     "clean": "rm -rf ./dist",
-    "build": "npm run clean && webpack",
-    "start": "npm run clean && node-hot --config webpack.config.js",
-    "start-forked": "npm run clean && node-hot --config webpack.config.js --fork"
+    "start-development": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js",
+    "start-development--forked": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js --fork",
+    "start-production": "npm run clean && NODE_ENV=production node-hot --config webpack.config.js"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "compression": "^1.7.2",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "dotenv-webpack": "^1.5.7",
+    "express": "^4.16.3",
+    "method-override": "^2.3.10",
+    "mongoose": "^5.2.1",
+    "morgan": "^1.9.0",
+    "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
     "babel-preset-env": "^1.7.0",
+    "chalk": "^2.4.1",
     "node-hot-loader": "^1.8.6",
     "webpack": "^4.15.1",
     "webpack-node-externals": "^1.7.2"
