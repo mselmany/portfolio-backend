@@ -9,57 +9,42 @@ const GITHUB_SCOPE = "";
 const AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
 const TOKEN_URL = "https://github.com/login/oauth/access_token";
 const API_URL = "https://api.github.com";
-// const STARRED_URL = `${API_URL}/user/starred`;
 const STARRED_URL = `${API_URL}/users/${GITHUB_USERNAME}/starred`;
-const EVENTS_URL = `${API_URL}/users/${GITHUB_USERNAME}/events/public`;
+const WATCHERS_URL = `${API_URL}/users/${GITHUB_USERNAME}/subscriptions`;
+const EVENTS_URL = `${API_URL}/users/${GITHUB_USERNAME}/events`;
+const GISTS_URL = `${API_URL}/users/${GITHUB_USERNAME}/gists`;
 
-export function authorize() {
-  return `${AUTHORIZE_URL}?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URL}&scope=${GITHUB_SCOPE}&allow_signup=true`;
-}
-
-export async function token({ code, state, redirect_uri }) {
-  if (!code) {
-    throw new Error(`${messages.DATA_MISSING}: 'code'`);
-  }
-  return await axios.post(
-    TOKEN_URL,
-    {
-      client_id: GITHUB_CLIENT_ID,
-      client_secret: GITHUB_CLIENT_SECRET,
-      code,
-      ...(state && { state }),
-      ...(redirect_uri && { redirect_uri })
-    },
-    {
-      headers: { Accept: "application/json" }
-    }
-  );
-}
-
-export async function events({ authorization, ...query }) {
-  /* if (!authorization) {
-    throw new Error(`${messages.DATA_MISSING}: 'authorization'`);
-  } */
+export async function events({ ...query }) {
   const { page } = query;
   return await axios.get(EVENTS_URL, {
-    /* headers: {
-      authorization
-    }, */
     params: {
       ...(page && { page })
     }
   });
 }
 
-export async function stars({ authorization, ...query }) {
-  /* if (!authorization) {
-    throw new Error(`${messages.DATA_MISSING}: 'authorization'`);
-  } */
+export async function watchers({ ...query }) {
+  const { page } = query;
+  return await axios.get(WATCHERS_URL, {
+    params: {
+      ...(page && { page })
+    }
+  });
+}
+
+export async function stars({ ...query }) {
   const { page, per_page } = query;
   return await axios.get(STARRED_URL, {
-    /* headers: {
-      authorization
-    }, */
+    params: {
+      ...(page && { page }),
+      ...(per_page && { per_page })
+    }
+  });
+}
+
+export async function gists({ ...query }) {
+  const { page, per_page } = query;
+  return await axios.get(GISTS_URL, {
     params: {
       ...(page && { page }),
       ...(per_page && { per_page })
