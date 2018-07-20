@@ -1,11 +1,12 @@
 import axios from "axios";
 import messages from "@/messages";
 
+const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
+const API_URL = "https://api.twitter.com/1.1";
 const TOKEN_URL = "https://api.twitter.com/oauth2/token";
 const INVALIDATE_TOKEN_URL = "https://api.twitter.com/oauth2/invalidate_token";
-const TIMELINE_URL = "https://api.twitter.com/1.1/statuses/user_timeline.json";
-const LIKES_URL = "https://api.twitter.com/1.1/favorites/list.json";
-const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
+const TIMELINE_URL = `${API_URL}/statuses/user_timeline.json`;
+const LIKES_URL = `${API_URL}/favorites/list.json`;
 
 function credentials() {
   return new Buffer(
@@ -22,11 +23,7 @@ export async function token() {
   });
 }
 
-export async function invalidateToken(access_token) {
-  if (!access_token) {
-    throw new Error(`${messages.DATA_MISSING}: 'access_token'`);
-  }
-
+export async function invalidateToken({ access_token }) {
   return await axios.post(
     INVALIDATE_TOKEN_URL,
     `access_token=${access_token}`,
@@ -39,19 +36,16 @@ export async function invalidateToken(access_token) {
   );
 }
 
-export async function timeline({ authorization, ...query }) {
-  if (!authorization) {
-    throw new Error(`${messages.DATA_MISSING}: 'authorization'`);
-  }
-  const {
-    user_id,
-    since_id,
-    count,
-    max_id,
-    trim_user,
-    exclude_replies,
-    include_rts
-  } = query;
+export async function timeline({
+  authorization,
+  user_id,
+  since_id,
+  count,
+  max_id,
+  trim_user,
+  exclude_replies,
+  include_rts
+}) {
   return await axios.get(TIMELINE_URL, {
     headers: {
       authorization
@@ -69,11 +63,14 @@ export async function timeline({ authorization, ...query }) {
   });
 }
 
-export async function likes({ authorization, ...query }) {
-  if (!authorization) {
-    throw new Error(`${messages.DATA_MISSING}: 'authorization'`);
-  }
-  const { user_id, since_id, count, max_id, include_rts } = query;
+export async function likes({
+  authorization,
+  user_id,
+  since_id,
+  count,
+  max_id,
+  include_rts
+}) {
   return await axios.get(LIKES_URL, {
     headers: {
       authorization
