@@ -1,87 +1,117 @@
-import axios from "axios";
-import messages from "@/messages";
+import { ApiBase, Utils } from "@/helpers";
 
 const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
+const TWITTER_COMSUMER_KEY = process.env.TWITTER_COMSUMER_KEY;
+const TWITTER_COMSUMER_SECRET = process.env.TWITTER_COMSUMER_SECRET;
 const API_URL = "https://api.twitter.com/1.1";
-const TOKEN_URL = "https://api.twitter.com/oauth2/token";
-const INVALIDATE_TOKEN_URL = "https://api.twitter.com/oauth2/invalidate_token";
-const TIMELINE_URL = `${API_URL}/statuses/user_timeline.json`;
-const LIKES_URL = `${API_URL}/favorites/list.json`;
+const AUTH_URL = "https://api.twitter.com/oauth2";
 
-function credentials() {
-  return new Buffer(
-    process.env.TWITTER_COMSUMER_KEY + ":" + process.env.TWITTER_COMSUMER_SECRET
-  ).toString("base64");
-}
+class Twitter extends ApiBase {
+  constructor(username, consumer_key, consumer_secret) {
+    Utils.required({ username, consumer_key, consumer_secret });
+    super({ baseURL: API_URL });
+    this.username = username;
+    this.credentials = new Buffer(
+      `${consumer_key}:${consumer_secret}`
+    ).toString("base64");
+  }
 
-export async function token() {
-  return await axios.post(TOKEN_URL, "grant_type=client_credentials", {
-    headers: {
-      Authorization: `Basic ${credentials()}`,
-      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+  async token() {
+    try {
+      return await this.client.post("/token", "grant_type=client_credentials", {
+        baseURL: AUTH_URL,
+        headers: {
+          Authorization: `Basic ${this.credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        }
+      });
+    } catch (err) {
+      this.error(err);
     }
-  });
+  }
+
+  async invalidateToken({ access_token }) {
+    try {
+      this.required({ access_token });
+      return await this.client.post(
+        "/invalidate_token",
+        `access_token=${access_token}`,
+        {
+          baseURL: AUTH_URL,
+          headers: {
+            Authorization: `Basic ${this.credentials}`,
+            "Content-Type": "application/x-www-form-urlencoded;"
+          }
+        }
+      );
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async timeline({
+    authorization,
+    user_id,
+    since_id,
+    count,
+    max_id,
+    trim_user,
+    exclude_replies,
+    include_rts
+  }) {
+    try {
+      this.required({ authorization });
+      return await this.client.get("/statuses/user_timeline.json", {
+        headers: {
+          authorization
+        },
+        params: {
+          screen_name: this.username,
+          ...(user_id && { user_id }),
+          ...(since_id && { since_id }),
+          ...(count && { count }),
+          ...(max_id && { max_id }),
+          ...(trim_user && { trim_user }),
+          ...(exclude_replies && { exclude_replies }),
+          ...(include_rts && { include_rts })
+        }
+      });
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async likes({
+    authorization,
+    user_id,
+    since_id,
+    count,
+    max_id,
+    include_rts
+  }) {
+    try {
+      this.required({ authorization });
+      return await this.client.get("/favorites/list.json", {
+        headers: {
+          authorization
+        },
+        params: {
+          screen_name: this.username,
+          ...(user_id && { user_id }),
+          ...(since_id && { since_id }),
+          ...(count && { count }),
+          ...(max_id && { max_id }),
+          ...(include_rts && { include_rts })
+        }
+      });
+    } catch (err) {
+      this.error(err);
+    }
+  }
 }
 
-export async function invalidateToken({ access_token }) {
-  return await axios.post(
-    INVALIDATE_TOKEN_URL,
-    `access_token=${access_token}`,
-    {
-      headers: {
-        Authorization: `Basic ${credentials()}`,
-        "Content-Type": "application/x-www-form-urlencoded;"
-      }
-    }
-  );
-}
-
-export async function timeline({
-  authorization,
-  user_id,
-  since_id,
-  count,
-  max_id,
-  trim_user,
-  exclude_replies,
-  include_rts
-}) {
-  return await axios.get(TIMELINE_URL, {
-    headers: {
-      authorization
-    },
-    params: {
-      screen_name: TWITTER_USERNAME,
-      ...(user_id && { user_id }),
-      ...(since_id && { since_id }),
-      ...(count && { count }),
-      ...(max_id && { max_id }),
-      ...(trim_user && { trim_user }),
-      ...(exclude_replies && { exclude_replies }),
-      ...(include_rts && { include_rts })
-    }
-  });
-}
-
-export async function likes({
-  authorization,
-  user_id,
-  since_id,
-  count,
-  max_id,
-  include_rts
-}) {
-  return await axios.get(LIKES_URL, {
-    headers: {
-      authorization
-    },
-    params: {
-      screen_name: TWITTER_USERNAME,
-      ...(user_id && { user_id }),
-      ...(since_id && { since_id }),
-      ...(count && { count }),
-      ...(max_id && { max_id }),
-      ...(include_rts && { include_rts })
-    }
-  });
-}
+export default new Twitter(
+  TWITTER_USERNAME,
+  TWITTER_COMSUMER_KEY,
+  TWITTER_COMSUMER_SECRET
+);

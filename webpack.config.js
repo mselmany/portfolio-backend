@@ -34,7 +34,7 @@ let config = {
 };
 
 if (isDev) {
-  config.devtool = "cheap-eval-source-map";
+  config.devtool = "cheap-module-eval-source-map";
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
 }
 

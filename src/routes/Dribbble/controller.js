@@ -1,48 +1,81 @@
-import axios from "axios";
+import { ApiBase, Utils } from "@/helpers";
 
 const DRIBBBLE_CLIENT_ID = process.env.DRIBBBLE_CLIENT_ID;
 const DRIBBBLE_CLIENT_SECRET = process.env.DRIBBBLE_CLIENT_SECRET;
-const DRIBBBLE_REDIRECT_URL = process.env.DRIBBBLE_REDIRECT_URL;
-const AUTHORIZE_URL = "https://dribbble.com/oauth/authorize";
-const TOKEN_URL = "https://dribbble.com/oauth/token";
 const API_URL = "https://api.dribbble.com/v2";
-const SHOTS_URL = `${API_URL}/user/shots`;
-// const LIKES_URL = `${API_URL}/user/likes`;
+const AUTH_URL = "https://dribbble.com/oauth";
 
-export function authorize() {
-  return `${AUTHORIZE_URL}?client_id=${DRIBBBLE_CLIENT_ID}&redirect_uri=${DRIBBBLE_REDIRECT_URL}`;
-}
+class Dribbble extends ApiBase {
+  constructor(client_id, client_secret) {
+    Utils.required({ client_id, client_secret });
+    super({ baseURL: API_URL });
+    this.client_id = client_id;
+    this.client_secret = client_secret;
+    this.redirect_url = "http://localhost:3001/api/dribbble/token";
+  }
 
-export async function token({ code, redirect_uri }) {
-  return await axios.post(TOKEN_URL, {
-    client_id: DRIBBBLE_CLIENT_ID,
-    client_secret: DRIBBBLE_CLIENT_SECRET,
-    code,
-    ...(redirect_uri && { redirect_uri })
-  });
-}
+  authorize() {
+    return `${AUTH_URL}/authorize?client_id=${this.client_id}&redirect_uri=${
+      this.redirect_url
+    }`;
+  }
 
-export async function shots({ authorization, page, per_page }) {
-  return await axios.get(SHOTS_URL, {
-    headers: {
-      authorization
-    },
-    params: {
-      ...(page && { page }),
-      ...(per_page && { per_page })
+  async token({ code, redirect_uri } = {}) {
+    try {
+      this.required({ code });
+      return await this.client.post(
+        "/token",
+        {},
+        {
+          baseURL: AUTH_URL,
+          params: {
+            client_id: this.client_id,
+            client_secret: this.client_secret,
+            code,
+            ...(redirect_uri && { redirect_uri })
+          }
+        }
+      );
+    } catch (err) {
+      this.error(err);
     }
-  });
+  }
+
+  async shots({ authorization, page, perpage = this.perpage } = {}) {
+    try {
+      this.required({ authorization });
+      return await this.client.get("/user/shots", {
+        headers: {
+          authorization
+        },
+        params: {
+          ...(page && { page }),
+          ...(perpage && { perpage })
+        }
+      });
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  /*   
+  // ! Bu endpoint sadece Dribbble tarafından onaylanmış uygulamalarda destekleniyor.
+  async likes({ authorization, page, perpage = this.perpage } = {}) {
+    try {
+      this.required({ authorization });
+      return await this.client.get("/user/likes", {
+        headers: {
+          authorization
+        },
+        params: {
+          ...(page && { page }),
+          ...(perpage && { perpage })
+        }
+      });
+    } catch (err) {
+      this.error(err);
+    }
+  } */
 }
 
-// Bu endpoint sadece Dribbble tarafından onaylanmış uygulamalarda destekleniyor.
-/* export async function likes({ authorization, page, per_page }) {
-  return await axios.get(LIKES_URL, {
-    headers: {
-      authorization
-    },
-    params: {
-      ...(page && { page }),
-      ...(per_page && { per_page })
-    }
-  });
-} */
+export default new Dribbble(DRIBBBLE_CLIENT_ID, DRIBBBLE_CLIENT_SECRET);
