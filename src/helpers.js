@@ -9,6 +9,7 @@ export class Utils {
   constructor() {}
 
   static error(message) {
+    console.log(message);
     throw new Error(message);
   }
 

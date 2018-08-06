@@ -11,13 +11,17 @@ class Dribbble extends ApiBase {
     super({ baseURL: API_URL });
     this.client_id = client_id;
     this.client_secret = client_secret;
-    this.redirect_url = "http://localhost:3001/api/dribbble/token";
   }
 
-  authorize() {
-    return `${AUTH_URL}/authorize?client_id=${this.client_id}&redirect_uri=${
-      this.redirect_url
-    }`;
+  authorize({ redirect_url } = {}) {
+    try {
+      this.required({ redirect_url });
+      return `${AUTH_URL}/authorize?client_id=${
+        this.client_id
+      }&redirect_uri=${redirect_url}`;
+    } catch (err) {
+      this.error(err);
+    }
   }
 
   async token({ code, redirect_uri } = {}) {

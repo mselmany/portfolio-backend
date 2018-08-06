@@ -2,6 +2,10 @@
 
 ## GENEL YAPILACAKLAR
 
+### api tokenları - alınan tokenları db ye kaydetme
+
+- apilerin auth ile alınmış tokenlarını db ye kaydet ki her server restartta tekrar token oluşturmak zorunda kalma...
+
 ### timeline - tüm hesapları tek bir akışta gösterme
 
 - Aktif hesaplar frontend için tarihe göre sıralı olarak tüm sosyal medya hesaplarını tek bir endpointten getirebilmeli.
