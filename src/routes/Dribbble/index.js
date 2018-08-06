@@ -5,7 +5,7 @@ const router = Router();
 
 router.get("/authorize", function(req, res, next) {
   try {
-    res.redirect(Dribbble.authorize());
+    res.redirect(Dribbble.authorize({ ...req.query }));
   } catch (error) {
     next(error);
   }

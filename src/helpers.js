@@ -1,14 +1,21 @@
 import axios from "axios";
 import messages from "./messages";
 
-export const isTest = process.env.NODE_ENV === "test";
-export const isDev = process.env.NODE_ENV === "development";
-export const isProd = process.env.NODE_ENV === "production";
-
 export class Utils {
   constructor() {}
 
+  static get env() {
+    return {
+      isTest: process.env.NODE_ENV === "test",
+      isDev: process.env.NODE_ENV === "development",
+      isProd: process.env.NODE_ENV === "production"
+    };
+  }
+
   static error(message) {
+    if (Utils.env.isDev) {
+      console.log(message);
+    }
     throw new Error(message);
   }
 

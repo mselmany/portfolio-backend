@@ -6,6 +6,7 @@ import Raindrop from "./Raindrop";
 import Soundcloud from "./Soundcloud";
 import Medium from "./Medium";
 import Youtube from "./Youtube";
+import Pocket from "./Pocket";
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.use("/raindrop", Raindrop);
 router.use("/soundcloud", Soundcloud);
 router.use("/youtube", Youtube);
 router.use("/medium", Medium);
+router.use("/pocket", Pocket);
 
 router.get("/status", function(req, res) {
   res.status(200).json({ message: "Winner winner chicken dinner" });

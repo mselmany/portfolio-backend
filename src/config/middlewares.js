@@ -6,7 +6,7 @@ import methodOverride from "method-override";
 import cors from "cors";
 import favicon from "serve-favicon";
 import path from "path";
-import { isTest, isDev, isProd } from "@/helpers";
+import { Utils } from "@/helpers";
 
 export default (express, app) => {
   app.use(compression());
@@ -20,16 +20,16 @@ export default (express, app) => {
   app.use(
     cors({
       credentials: true,
-      origin: process.env.FRONT_ORIGIN // Change allowed origin url for production
+      origin: process.env.FRONT_ORIGIN // ! TODO:  Change allowed origin url for production
     })
   );
   app.use(methodOverride());
 
-  if (isProd) {
+  if (Utils.env.isProd) {
     app.use(favicon(path.resolve(__dirname, "public/favicon.ico")));
     app.use(express.static(path.resolve(__dirname, "public")));
   }
-  if (isDev && !isTest) {
+  if (Utils.env.isDev && !Utils.env.isTest) {
     app.use(morgan("dev"));
   }
 };
