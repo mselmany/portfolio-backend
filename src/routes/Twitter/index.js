@@ -6,6 +6,7 @@ const router = Router();
 router.get("/token", async function(req, res, next) {
   try {
     const r = await Twitter.token();
+    // ! TODO: save access_token to db.
     res.status(200).json(r.data);
   } catch (error) {
     next(error);

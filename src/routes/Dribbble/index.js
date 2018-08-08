@@ -14,6 +14,7 @@ router.get("/authorize", function(req, res, next) {
 router.get("/token", async function(req, res, next) {
   try {
     const r = await Dribbble.token({ ...req.query });
+    // ! TODO: save access_token to db.
     res.status(200).json(r.data);
   } catch (error) {
     next(error);

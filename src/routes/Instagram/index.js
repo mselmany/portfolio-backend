@@ -1,56 +1,38 @@
 import { Router } from "express";
-import Soundcloud from "./controller";
+import Instagram from "./controller";
 
 const router = Router();
 
+router.get("/authorize", async function(req, res, next) {
+  try {
+    res.redirect(Instagram.authorize({ ...req.query }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/token", async function(req, res, next) {
+  try {
+    const r = await Instagram.token({ ...req.query });
+    // ! TODO: save access_token to db.
+    res.status(200).json(r.data);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/user", async function(req, res, next) {
   try {
-    const r = await Soundcloud.user({ ...req.query });
+    const r = await Instagram.user({ ...req.query });
     res.status(200).json(r.data);
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/playlists", async function(req, res, next) {
+router.get("/media", async function(req, res, next) {
   try {
-    const r = await Soundcloud.playlists({ ...req.query });
-    res.status(200).json(r.data);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/comments", async function(req, res, next) {
-  try {
-    const r = await Soundcloud.comments({ ...req.query });
-    res.status(200).json(r.data);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/favorites", async function(req, res, next) {
-  try {
-    const r = await Soundcloud.favorites({ ...req.query });
-    res.status(200).json(r.data);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/tracks", async function(req, res, next) {
-  try {
-    const r = await Soundcloud.tracks({ ...req.query });
-    res.status(200).json(r.data);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/track/:id", async function(req, res, next) {
-  try {
-    const r = await Soundcloud.track({ ...req.params });
+    const r = await Instagram.media({ ...req.query });
     res.status(200).json(r.data);
   } catch (error) {
     next(error);

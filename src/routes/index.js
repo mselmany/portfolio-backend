@@ -7,6 +7,7 @@ import Soundcloud from "./Soundcloud";
 import Medium from "./Medium";
 import Youtube from "./Youtube";
 import Pocket from "./Pocket";
+import Instagram from "./Instagram";
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.use("/soundcloud", Soundcloud);
 router.use("/youtube", Youtube);
 router.use("/medium", Medium);
 router.use("/pocket", Pocket);
+router.use("/instagram", Instagram);
 
 router.get("/status", function(req, res) {
   res.status(200).json({ message: "Winner winner chicken dinner" });
