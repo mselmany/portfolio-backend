@@ -2,6 +2,12 @@
 
 ## GENEL YAPILACAKLAR
 
+### sosyal medya api - yapılması gerekenler
+
+-Tumblr;
+-- ana blogdan data çekilemiyor!!
+-- "likes" sadece tumblr ayarlarından beğeniler public ise kullanılabilir.
+
 ### api tokenları - alınan tokenları db ye kaydetme
 
 - apilerin auth ile alınmış tokenlarını db ye kaydet ki her server restartta tekrar token oluşturmak zorunda kalma...
