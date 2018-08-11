@@ -20,21 +20,25 @@ class Tumblr extends ApiBase {
     this.consumer_secret = consumer_secret;
   }
 
-  async bloginfo({ blogname } = {}) {
-    const _blogname = blogname || this.blogname;
+  async bloginfo({ blogname = this.blogname } = {}) {
     try {
-      let r = await this.client.get(`/blog/${_blogname}/info`);
-      r.data.response.blog.avatar = `${API_URL}/blog/${_blogname}/avatar/512`;
+      let r = await this.client.get(`/blog/${blogname}/info`);
+      r.data.response.blog.avatar = `${API_URL}/blog/${blogname}/avatar/512`;
       return r.data;
     } catch (err) {
       this.error(err);
     }
   }
 
-  async likes({ blogname, limit = this.perpage, offset, before, after } = {}) {
-    const _blogname = blogname || this.blogname;
+  async likes({
+    blogname = this.blogname,
+    limit = this.perpage,
+    offset,
+    before,
+    after
+  } = {}) {
     try {
-      let r = await this.client.get(`/blog/${_blogname}/likes`, {
+      let r = await this.client.get(`/blog/${blogname}/likes`, {
         params: {
           ...(limit && { limit }),
           ...(offset && { offset }),
@@ -49,7 +53,7 @@ class Tumblr extends ApiBase {
   }
 
   async posts({
-    blogname,
+    blogname = this.blogname,
     type,
     id,
     tag,
@@ -60,10 +64,9 @@ class Tumblr extends ApiBase {
     offset,
     before
   } = {}) {
-    const _blogname = blogname || this.blogname;
     const _type = type ? `/${type}` : "";
     try {
-      let r = await this.client.get(`/blog/${_blogname}/posts${_type}`, {
+      let r = await this.client.get(`/blog/${blogname}/posts${_type}`, {
         params: {
           ...(id && { id }),
           ...(tag && { tag }),

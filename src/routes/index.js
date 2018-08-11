@@ -9,6 +9,7 @@ import Youtube from "./Youtube";
 import Pocket from "./Pocket";
 import Instagram from "./Instagram";
 import Tumblr from "./Tumblr";
+import Unsplash from "./Unsplash";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use("/medium", Medium);
 router.use("/pocket", Pocket);
 router.use("/instagram", Instagram);
 router.use("/tumblr", Tumblr);
+router.use("/unsplash", Unsplash);
 
 router.get("/status", function(req, res) {
   res.status(200).json({ message: "Winner winner chicken dinner" });

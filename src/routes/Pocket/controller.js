@@ -39,11 +39,12 @@ class Pocket extends ApiBase {
   async token({ code, state } = {}) {
     try {
       this.required({ code });
-      return await this.client.post("/oauth/authorize", {
+      const r = await this.client.post("/oauth/authorize", {
         consumer_key: this.consumer_key,
         code,
         ...(state && { state })
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -58,7 +59,7 @@ class Pocket extends ApiBase {
   } = {}) {
     try {
       this.required({ access_token });
-      return await this.client.post("/get", {
+      const r = await this.client.post("/get", {
         access_token,
         consumer_key: this.consumer_key,
         state: "all",
@@ -68,6 +69,7 @@ class Pocket extends ApiBase {
         ...(offset && { offset }),
         ...(count && { count })
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }

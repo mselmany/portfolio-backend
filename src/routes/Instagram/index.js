@@ -15,7 +15,7 @@ router.get("/token", async function(req, res, next) {
   try {
     const r = await Instagram.token({ ...req.query });
     // ! TODO: save access_token to db.
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -24,7 +24,7 @@ router.get("/token", async function(req, res, next) {
 router.get("/user", async function(req, res, next) {
   try {
     const r = await Instagram.user({ ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -33,7 +33,7 @@ router.get("/user", async function(req, res, next) {
 router.get("/media", async function(req, res, next) {
   try {
     const r = await Instagram.media({ ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }

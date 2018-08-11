@@ -19,12 +19,13 @@ class Soundcloud extends ApiBase {
 
   async user({ limit = this.perpage, linked_partitioning = 1 } = {}) {
     try {
-      return await this.client.get(`/users/${this.user_id}`, {
+      const r = await this.client.get(`/users/${this.user_id}`, {
         params: {
           ...(limit && { limit }),
           ...(linked_partitioning && { linked_partitioning })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -32,12 +33,13 @@ class Soundcloud extends ApiBase {
 
   async playlists({ limit = this.perpage, linked_partitioning = 1 } = {}) {
     try {
-      return await this.client.get(`/users/${this.user_id}/playlists`, {
+      const r = await this.client.get(`/users/${this.user_id}/playlists`, {
         params: {
           ...(limit && { limit }),
           ...(linked_partitioning && { linked_partitioning })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -49,13 +51,14 @@ class Soundcloud extends ApiBase {
     offset
   } = {}) {
     try {
-      return await this.client.get(`/users/${this.user_id}/comments`, {
+      const r = await this.client.get(`/users/${this.user_id}/comments`, {
         params: {
           ...(limit && { limit }),
           ...(linked_partitioning && { linked_partitioning }),
           ...(offset && { offset })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -68,7 +71,7 @@ class Soundcloud extends ApiBase {
     page_size
   } = {}) {
     try {
-      return await this.client.get(`/users/${this.user_id}/favorites`, {
+      const r = await this.client.get(`/users/${this.user_id}/favorites`, {
         params: {
           ...(limit && { limit }),
           ...(linked_partitioning && { linked_partitioning }),
@@ -76,6 +79,7 @@ class Soundcloud extends ApiBase {
           ...(page_size && { page_size })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -83,12 +87,13 @@ class Soundcloud extends ApiBase {
 
   async tracks({ limit = this.perpage, linked_partitioning = 1 } = {}) {
     try {
-      return await this.client.get(`/users/${this.user_id}/tracks`, {
+      const r = await this.client.get(`/users/${this.user_id}/tracks`, {
         params: {
           ...(limit && { limit }),
           ...(linked_partitioning && { linked_partitioning })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -97,7 +102,8 @@ class Soundcloud extends ApiBase {
   async track({ id } = {}) {
     try {
       this.required({ id });
-      return await this.client.get(`/tracks/${id}`);
+      const r = await this.client.get(`/tracks/${id}`);
+      return r.data;
     } catch (err) {
       this.error(err);
     }

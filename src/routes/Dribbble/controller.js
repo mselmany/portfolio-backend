@@ -27,7 +27,7 @@ class Dribbble extends ApiBase {
   async token({ code, redirect_uri } = {}) {
     try {
       this.required({ code });
-      return await this.client.post(
+      const r = await this.client.post(
         "/token",
         {},
         {
@@ -40,6 +40,7 @@ class Dribbble extends ApiBase {
           }
         }
       );
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -48,7 +49,7 @@ class Dribbble extends ApiBase {
   async shots({ authorization, page, perpage = this.perpage } = {}) {
     try {
       this.required({ authorization });
-      return await this.client.get("/user/shots", {
+      const r = await this.client.get("/user/shots", {
         headers: {
           authorization
         },
@@ -57,6 +58,7 @@ class Dribbble extends ApiBase {
           ...(perpage && { perpage })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -67,7 +69,7 @@ class Dribbble extends ApiBase {
   async likes({ authorization, page, perpage = this.perpage } = {}) {
     try {
       this.required({ authorization });
-      return await this.client.get("/user/likes", {
+      const r = await this.client.get("/user/likes", {
         headers: {
           authorization
         },
@@ -76,6 +78,7 @@ class Dribbble extends ApiBase {
           ...(perpage && { perpage })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }

@@ -5,8 +5,8 @@ const router = Router();
 
 router.get("/collection", async function(req, res, next) {
   try {
-    const r = await Raindrop.collection();
-    res.status(200).json(r.data);
+    const r = await Raindrop.collection({ ...req.query });
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -15,7 +15,7 @@ router.get("/collection", async function(req, res, next) {
 router.get("/bookmarks", async function(req, res, next) {
   try {
     const r = await Raindrop.bookmarks({ ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -24,7 +24,7 @@ router.get("/bookmarks", async function(req, res, next) {
 router.get("/bookmark/:id", async function(req, res, next) {
   try {
     const r = await Raindrop.bookmark({ ...req.params });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }

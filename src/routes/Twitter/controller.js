@@ -18,13 +18,18 @@ class Twitter extends ApiBase {
 
   async token() {
     try {
-      return await this.client.post("/token", "grant_type=client_credentials", {
-        baseURL: AUTH_URL,
-        headers: {
-          Authorization: `Basic ${this.credentials}`,
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      const r = await this.client.post(
+        "/token",
+        "grant_type=client_credentials",
+        {
+          baseURL: AUTH_URL,
+          headers: {
+            Authorization: `Basic ${this.credentials}`,
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+          }
         }
-      });
+      );
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -33,7 +38,7 @@ class Twitter extends ApiBase {
   async invalidateToken({ access_token }) {
     try {
       this.required({ access_token });
-      return await this.client.post(
+      const r = await this.client.post(
         "/invalidate_token",
         `access_token=${access_token}`,
         {
@@ -44,6 +49,7 @@ class Twitter extends ApiBase {
           }
         }
       );
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -61,7 +67,7 @@ class Twitter extends ApiBase {
   }) {
     try {
       this.required({ authorization });
-      return await this.client.get("/statuses/user_timeline.json", {
+      const r = await this.client.get("/statuses/user_timeline.json", {
         headers: {
           authorization
         },
@@ -76,6 +82,7 @@ class Twitter extends ApiBase {
           ...(include_rts && { include_rts })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -91,7 +98,7 @@ class Twitter extends ApiBase {
   }) {
     try {
       this.required({ authorization });
-      return await this.client.get("/favorites/list.json", {
+      const r = await this.client.get("/favorites/list.json", {
         headers: {
           authorization
         },
@@ -104,6 +111,7 @@ class Twitter extends ApiBase {
           ...(include_rts && { include_rts })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }

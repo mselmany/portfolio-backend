@@ -16,7 +16,7 @@ router.get("/token", async function(req, res, next) {
   try {
     const r = await Pocket.token({ ...req.query });
     // ! TODO: save access_token to db.
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -25,7 +25,7 @@ router.get("/token", async function(req, res, next) {
 router.get("/bookmarks", async function(req, res, next) {
   try {
     const r = await Pocket.bookmarks({ ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }

@@ -7,7 +7,7 @@ router.get("/token", async function(req, res, next) {
   try {
     const r = await Twitter.token();
     // ! TODO: save access_token to db.
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -18,7 +18,7 @@ router.post("/invalidate_token", async function(req, res, next) {
     const r = await Twitter.invalidateToken({ ...req.body });
     res.status(200).json({
       message: "Twitter 'access_token' successfully invalidated.",
-      invalidated_token: r.data.access_token
+      invalidated_token: r.access_token
     });
   } catch (error) {
     next(error);
@@ -28,7 +28,7 @@ router.post("/invalidate_token", async function(req, res, next) {
 router.get("/timeline", async function(req, res, next) {
   try {
     const r = await Twitter.timeline({ ...req.headers, ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }
@@ -37,7 +37,7 @@ router.get("/timeline", async function(req, res, next) {
 router.get("/likes", async function(req, res, next) {
   try {
     const r = await Twitter.likes({ ...req.headers, ...req.query });
-    res.status(200).json(r.data);
+    res.status(200).json(r);
   } catch (error) {
     next(error);
   }

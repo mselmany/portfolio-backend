@@ -10,25 +10,29 @@ class Github extends ApiBase {
     this.username = username;
   }
 
-  async events({ page } = {}) {
+  async events({ page, per_page = this.perpage } = {}) {
     try {
-      return await this.client.get(`/users/${this.username}/events`, {
+      const r = await this.client.get(`/users/${this.username}/events`, {
         params: {
-          ...(page && { page })
+          ...(page && { page }),
+          ...(per_page && { per_page })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
   }
 
-  async watchers({ page } = {}) {
+  async watchers({ page, per_page = this.perpage } = {}) {
     try {
-      return await this.client.get(`/users/${this.username}/subscriptions`, {
+      const r = await this.client.get(`/users/${this.username}/subscriptions`, {
         params: {
-          ...(page && { page })
+          ...(page && { page }),
+          ...(per_page && { per_page })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -36,12 +40,13 @@ class Github extends ApiBase {
 
   async stars({ page, per_page = this.perpage } = {}) {
     try {
-      return await this.client.get(`/users/${this.username}/starred`, {
+      const r = await this.client.get(`/users/${this.username}/starred`, {
         params: {
           ...(page && { page }),
           ...(per_page && { per_page })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
@@ -49,12 +54,13 @@ class Github extends ApiBase {
 
   async gists({ page, per_page = this.perpage } = {}) {
     try {
-      return await this.client.get(`/users/${this.username}/gists`, {
+      const r = await this.client.get(`/users/${this.username}/gists`, {
         params: {
           ...(page && { page }),
           ...(per_page && { per_page })
         }
       });
+      return r.data;
     } catch (err) {
       this.error(err);
     }
