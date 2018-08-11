@@ -4,11 +4,13 @@ import morgan from "morgan";
 import compression from "compression";
 import methodOverride from "method-override";
 import cors from "cors";
+import helmet from "helmet";
 import favicon from "serve-favicon";
 import path from "path";
 import { Utils } from "@/helpers";
 
 export default (express, app) => {
+  app.use(helmet());
   app.use(compression());
   app.use(
     bodyParser.urlencoded({
