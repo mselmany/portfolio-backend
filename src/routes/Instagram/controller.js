@@ -11,7 +11,8 @@ class Instagram extends ApiBase {
     super({ baseURL: API_URL });
     this.client_id = client_id;
     this.client_secret = client_secret;
-    this.redirect_uri = null;
+    this.redirect_uri;
+    this.access_token;
   }
 
   authorize({ redirect_uri } = {}) {
@@ -52,38 +53,51 @@ class Instagram extends ApiBase {
           "Content-Type": "application/x-www-form-urlencoded"
         }
       });
-      return r.data;
+      this.access_token = r.data.access_token;
+      return { class: "instagram.token", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
-  async user({ access_token } = {}) {
+  async user() {
     try {
-      this.required({ access_token });
+      this.required({ access_token: this.access_token });
       const r = await this.client.get("/users/self", {
         params: {
-          access_token
+          access_token: this.access_token
         }
       });
-      return r.data;
+      return { class: "instagram.user", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
-  async media({ access_token, min_id, max_id, count = this.perpage } = {}) {
+  async media({ min_id, max_id, count = this.perpage } = {}) {
     try {
-      this.required({ access_token });
+      this.required({ access_token: this.access_token });
       const r = await this.client.get("/users/self/media/recent", {
         params: {
-          access_token,
+          access_token: this.access_token,
           ...(min_id && { min_id }),
           ...(max_id && { max_id }),
           ...(count && { count })
         }
       });
-      return r.data;
+      return { class: "instagram.media", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = { user: this.user(), media: this.media() };
+      return {
+        class: "instagram.bundle",
+        data: { user: await r.user, media: await r.media }
+      };
     } catch (err) {
       this.error(err);
     }

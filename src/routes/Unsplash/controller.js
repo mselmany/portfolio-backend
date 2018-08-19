@@ -2,12 +2,11 @@ import { ApiBase, Utils } from "@/helpers";
 
 const UNSPLASH_USERNAME = process.env.UNSPLASH_USERNAME;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
-const UNSPLASH_SECRET_KEY = process.env.UNSPLASH_SECRET_KEY;
 const API_URL = "https://api.unsplash.com";
 
 class Unsplash extends ApiBase {
-  constructor(username, access_key, secret_key) {
-    Utils.required({ username, access_key, secret_key });
+  constructor(username, access_key) {
+    Utils.required({ username, access_key });
     super(
       { baseURL: API_URL },
       {
@@ -21,7 +20,6 @@ class Unsplash extends ApiBase {
     );
     this.username = username;
     this.access_key = access_key;
-    this.secret_key = secret_key;
   }
 
   async profile({ page, per_page = this.perpage } = {}) {
@@ -32,7 +30,7 @@ class Unsplash extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "unsplash.profile", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -57,7 +55,7 @@ class Unsplash extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "unsplash.photos", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -72,7 +70,7 @@ class Unsplash extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "unsplash.likes", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -86,7 +84,7 @@ class Unsplash extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "unsplash.collections", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -100,15 +98,11 @@ class Unsplash extends ApiBase {
           ...(quantity && { quantity })
         }
       });
-      return r.data;
+      return { class: "unsplash.statistics", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 }
 
-export default new Unsplash(
-  UNSPLASH_USERNAME,
-  UNSPLASH_ACCESS_KEY,
-  UNSPLASH_SECRET_KEY
-);
+export default new Unsplash(UNSPLASH_USERNAME, UNSPLASH_ACCESS_KEY);

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import Timeline from "./Timeline";
 import Twitter from "./Twitter";
 import Dribbble from "./Dribbble";
 import Github from "./Github";
@@ -13,20 +14,21 @@ import Unsplash from "./Unsplash";
 
 const router = Router();
 
+router.use(Timeline);
 router.use("/twitter", Twitter);
 router.use("/dribbble", Dribbble);
 router.use("/github", Github);
 router.use("/raindrop", Raindrop);
 router.use("/soundcloud", Soundcloud);
-router.use("/youtube", Youtube);
 router.use("/medium", Medium);
+router.use("/youtube", Youtube);
 router.use("/pocket", Pocket);
 router.use("/instagram", Instagram);
 router.use("/tumblr", Tumblr);
 router.use("/unsplash", Unsplash);
 
 router.get("/status", function(req, res) {
-  res.status(200).json({ message: "Winner winner chicken dinner" });
+  res.status(200).json({ status: "OK", message: "Server is up and running." });
 });
 
 export default router;

@@ -18,7 +18,7 @@ class Github extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "github.events", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -32,7 +32,7 @@ class Github extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "github.watchers", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -46,7 +46,7 @@ class Github extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "github.stars", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -60,7 +60,29 @@ class Github extends ApiBase {
           ...(per_page && { per_page })
         }
       });
-      return r.data;
+      return { class: "github.gists", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        events: this.events(),
+        watchers: this.watchers(),
+        stars: this.stars(),
+        gists: this.gists()
+      };
+      return {
+        class: "github.bundle",
+        data: {
+          events: await r.events,
+          watchers: await r.watchers,
+          stars: await r.stars,
+          gists: await r.gists
+        }
+      };
     } catch (err) {
       this.error(err);
     }

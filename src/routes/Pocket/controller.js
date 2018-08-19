@@ -18,15 +18,15 @@ class Pocket extends ApiBase {
       }
     );
     this.consumer_key = consumer_key;
+    this.access_token;
   }
 
-  async authorize({ redirect_uri, state } = {}) {
+  async authorize({ redirect_uri } = {}) {
     try {
       this.required({ redirect_uri });
       const r = await this.client.post("/oauth/request", {
         consumer_key: this.consumer_key,
-        redirect_uri,
-        ...(state && { state })
+        redirect_uri
       });
       return `https://getpocket.com/auth/authorize?request_token=${
         r.data.code
@@ -36,43 +36,55 @@ class Pocket extends ApiBase {
     }
   }
 
-  async token({ code, state } = {}) {
+  async token({ code } = {}) {
     try {
       this.required({ code });
       const r = await this.client.post("/oauth/authorize", {
         consumer_key: this.consumer_key,
-        code,
-        ...(state && { state })
+        code
       });
-      return r.data;
+      this.access_token = r.data.access_token;
+      return { class: "pocket.token", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
   async bookmarks({
-    access_token,
-    detailType,
+    detailType = "simple",
     since,
     offset,
     count = this.perpage
   } = {}) {
     try {
-      this.required({ access_token });
+      this.required({
+        access_token: this.access_token,
+        consumer_key: this.consumer_key
+      });
       const r = await this.client.post("/get", {
-        access_token,
+        access_token: this.access_token,
         consumer_key: this.consumer_key,
         state: "all",
         sort: "newest",
-        detailType: detailType || "simple",
+        detailType,
         ...(since && { since }),
         ...(offset && { offset }),
         ...(count && { count })
       });
-      return r.data;
+      return { class: "pocket.bookmarks", data: r.data };
     } catch (err) {
       this.error(err);
     }
+  }
+
+  async _bundle() {
+    if (!this.access_token) {
+      return "auth needed!";
+    }
+    let r = {
+      bookmarks: this.bookmarks()
+    };
+    return { class: "pocket.bundle", data: { bookmarks: await r.bookmarks } };
   }
 }
 

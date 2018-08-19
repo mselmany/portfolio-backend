@@ -7,10 +7,16 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Attach by Process ID",
+      "name": "Attach by PROCESS ID",
       "processId": "${command:PickProcess}",
-      // "outFiles": ["${workspaceRoot}/dist/**/*.js"],
-      "protocol": "inspector"
+      "outFiles": ["${workspaceRoot}/dist/**/*.js"],
+      "protocol": "inspector",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceRoot}/node_modules/*",
+        "webpack:///./*": "${workspaceRoot}/*",
+        "webpack:///*": "*"
+      }
     }
   ]
 }

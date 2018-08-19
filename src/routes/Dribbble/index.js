@@ -5,7 +5,7 @@ const router = Router();
 
 router.get("/authorize", function(req, res, next) {
   try {
-    res.redirect(Dribbble.authorize({ ...req.query }));
+    res.redirect(Dribbble.authorize());
   } catch (error) {
     next(error);
   }
@@ -14,7 +14,6 @@ router.get("/authorize", function(req, res, next) {
 router.get("/token", async function(req, res, next) {
   try {
     const r = await Dribbble.token({ ...req.query });
-    // ! TODO: save access_token to db.
     res.status(200).json(r);
   } catch (error) {
     next(error);
@@ -23,7 +22,7 @@ router.get("/token", async function(req, res, next) {
 
 router.get("/shots", async function(req, res, next) {
   try {
-    const r = await Dribbble.shots({ ...req.headers, ...req.query });
+    const r = await Dribbble.shots({ ...req.query });
     res.status(200).json(r);
   } catch (error) {
     next(error);

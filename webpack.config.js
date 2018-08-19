@@ -2,7 +2,7 @@ import webpack from "webpack";
 import nodeExternals from "webpack-node-externals";
 import dotenv from "dotenv-webpack";
 import path from "path";
-import { isDev, isProd } from "./src/helpers";
+import { Utils } from "./src/helpers";
 
 let config = {
   target: "node",
@@ -24,7 +24,10 @@ let config = {
   externals: [nodeExternals()],
   plugins: [
     new dotenv({
-      path: !isProd ? path.resolve(__dirname, "./.env.development") : undefined
+      path: path.resolve(
+        __dirname,
+        Utils.env.isProd ? "./.env" : "./.env.development"
+      )
     })
   ],
   stats: {
@@ -33,7 +36,7 @@ let config = {
   }
 };
 
-if (isDev) {
+if (Utils.env.isDev) {
   config.devtool = "cheap-module-eval-source-map";
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
 }

@@ -14,7 +14,6 @@ router.get("/authorize", async function(req, res, next) {
 router.get("/token", async function(req, res, next) {
   try {
     const r = await Instagram.token({ ...req.query });
-    // ! TODO: save access_token to db.
     res.status(200).json(r);
   } catch (error) {
     next(error);

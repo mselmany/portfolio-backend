@@ -262,7 +262,10 @@ class Medium extends ApiBase {
   async latest() {
     try {
       const r = await this.client.get(`/latest`);
-      return Medium.parser("latest", r.data);
+      return {
+        class: "medium.latest",
+        data: Medium.parser("latest", r.data)
+      };
     } catch (err) {
       this.error(err);
     }
@@ -271,7 +274,10 @@ class Medium extends ApiBase {
   async recommended() {
     try {
       const r = await this.client.get(`/has-recommended`);
-      return Medium.parser("recommended", r.data);
+      return {
+        class: "medium.recommended",
+        data: Medium.parser("recommended", r.data)
+      };
     } catch (err) {
       this.error(err);
     }
@@ -280,7 +286,10 @@ class Medium extends ApiBase {
   async responses() {
     try {
       const r = await this.client.get(`/responses`);
-      return Medium.parser("responses", r.data);
+      return {
+        class: "medium.responses",
+        data: Medium.parser("responses", r.data)
+      };
     } catch (err) {
       this.error(err);
     }
@@ -289,7 +298,32 @@ class Medium extends ApiBase {
   async highlights() {
     try {
       const r = await this.client.get(`/highlights`);
-      return Medium.parser("highlights", r.data);
+      return {
+        class: "medium.highlights",
+        data: Medium.parser("highlights", r.data)
+      };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        latest: this.latest(),
+        recommended: this.recommended(),
+        responses: this.responses(),
+        highlights: this.highlights()
+      };
+      return {
+        class: "medium.bundle",
+        data: {
+          latest: await r.latest,
+          recommended: await r.recommended,
+          responses: await r.responses,
+          highlights: await r.highlights
+        }
+      };
     } catch (err) {
       this.error(err);
     }

@@ -11,20 +11,19 @@ class Dribbble extends ApiBase {
     super({ baseURL: API_URL });
     this.client_id = client_id;
     this.client_secret = client_secret;
+    this.authorization;
   }
 
-  authorize({ redirect_url } = {}) {
+  authorize() {
     try {
-      this.required({ redirect_url });
-      return `${AUTH_URL}/authorize?client_id=${
-        this.client_id
-      }&redirect_uri=${redirect_url}`;
+      return `${AUTH_URL}/authorize?client_id=${this.client_id}`;
     } catch (err) {
       this.error(err);
     }
   }
 
-  async token({ code, redirect_uri } = {}) {
+  // have to be redirect via authorize()
+  async token({ code } = {}) {
     try {
       this.required({ code });
       const r = await this.client.post(
@@ -35,54 +34,64 @@ class Dribbble extends ApiBase {
           params: {
             client_id: this.client_id,
             client_secret: this.client_secret,
-            code,
-            ...(redirect_uri && { redirect_uri })
+            code
           }
         }
       );
-      return r.data;
+      const { token_type, access_token } = r.data;
+      this.authorization = `${token_type} ${access_token}`;
+      return { class: "dribbble.token", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
-  async shots({ authorization, page, perpage = this.perpage } = {}) {
+  async shots({ page, perpage = this.perpage } = {}) {
     try {
-      this.required({ authorization });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/user/shots", {
         headers: {
-          authorization
+          authorization: this.authorization
         },
         params: {
           ...(page && { page }),
           ...(perpage && { perpage })
         }
       });
-      return r.data;
+      return { class: "dribbble.shots", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
   /*   
-  // ! Bu endpoint sadece Dribbble tarafından onaylanmış uygulamalarda destekleniyor.
-  async likes({ authorization, page, perpage = this.perpage } = {}) {
+  // ! This endpoint supported only approved apps by Dribbble. If you want to fetch your likes please submit your app to Dribbble support team.
+  async likes({ page, perpage = this.perpage } = {}) {
     try {
-      this.required({ authorization });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/user/likes", {
         headers: {
-          authorization
+          authorization: this.authorization
         },
         params: {
           ...(page && { page }),
           ...(perpage && { perpage })
         }
       });
-      return r.data;
+      return { class: "dribbble.likes", data: r.data };
     } catch (err) {
       this.error(err);
     }
   } */
+
+  async _bundle() {
+    try {
+      let r = { shots: this.shots() };
+      return { class: "dribbble.bundle", data: { shots: await r.shots } };
+    } catch (err) {
+      this.error(err);
+    }
+  }
 }
 
 export default new Dribbble(DRIBBBLE_CLIENT_ID, DRIBBBLE_CLIENT_SECRET);

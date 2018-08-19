@@ -25,7 +25,7 @@ class Soundcloud extends ApiBase {
           ...(linked_partitioning && { linked_partitioning })
         }
       });
-      return r.data;
+      return { class: "soundcloud.user", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -39,7 +39,7 @@ class Soundcloud extends ApiBase {
           ...(linked_partitioning && { linked_partitioning })
         }
       });
-      return r.data;
+      return { class: "soundcloud.playlists", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -58,7 +58,7 @@ class Soundcloud extends ApiBase {
           ...(offset && { offset })
         }
       });
-      return r.data;
+      return { class: "soundcloud.comments", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -79,7 +79,7 @@ class Soundcloud extends ApiBase {
           ...(page_size && { page_size })
         }
       });
-      return r.data;
+      return { class: "soundcloud.favorites", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -93,7 +93,7 @@ class Soundcloud extends ApiBase {
           ...(linked_partitioning && { linked_partitioning })
         }
       });
-      return r.data;
+      return { class: "soundcloud.tracks", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -103,7 +103,7 @@ class Soundcloud extends ApiBase {
     try {
       this.required({ id });
       const r = await this.client.get(`/tracks/${id}`);
-      return r.data;
+      return { class: "soundcloud.track", data: r.data };
     } catch (err) {
       this.error(err);
     }

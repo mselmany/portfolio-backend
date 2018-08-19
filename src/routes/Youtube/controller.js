@@ -96,7 +96,10 @@ class Youtube extends ApiBase {
           ...(publishedAfter && { publishedAfter })
         }
       });
-      return Youtube.parser("activities", r.data);
+      return {
+        class: "youtube.activities",
+        data: Youtube.parser("activities", r.data)
+      };
     } catch (err) {
       this.error(err);
     }
@@ -113,6 +116,7 @@ class Youtube extends ApiBase {
       this.required({ id });
       const r = await this.client.get("/playlistItems", {
         params: {
+          channelId: this.channel_id,
           playlistId: id,
           part: "snippet,contentDetails",
           fields:
@@ -123,7 +127,10 @@ class Youtube extends ApiBase {
           ...(publishedAfter && { publishedAfter })
         }
       });
-      return Youtube.parser("playlist", r.data);
+      return {
+        class: "youtube.playlist",
+        data: Youtube.parser("playlist", r.data)
+      };
     } catch (err) {
       this.error(err);
     }
@@ -141,7 +148,7 @@ class Youtube extends ApiBase {
           ...(videoCategoryId && { videoCategoryId })
         }
       });
-      return Youtube.parser("video", r.data);
+      return { class: "youtube.video", data: Youtube.parser("video", r.data) };
     } catch (err) {
       this.error(err);
     }

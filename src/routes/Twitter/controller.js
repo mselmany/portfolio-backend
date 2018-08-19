@@ -11,6 +11,7 @@ class Twitter extends ApiBase {
     Utils.required({ username, consumer_key, consumer_secret });
     super({ baseURL: API_URL });
     this.username = username;
+    this.authorization;
     this.credentials = new Buffer(
       `${consumer_key}:${consumer_secret}`
     ).toString("base64");
@@ -29,16 +30,18 @@ class Twitter extends ApiBase {
           }
         }
       );
-      return r.data;
+      const { token_type, access_token } = r.data;
+      this.authorization = `${token_type} ${access_token}`;
+      return { class: "twitter.token", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
-  async invalidateToken({ access_token }) {
+  async refreshToken({ access_token }) {
     try {
       this.required({ access_token });
-      const r = await this.client.post(
+      await this.client.post(
         "/invalidate_token",
         `access_token=${access_token}`,
         {
@@ -49,27 +52,27 @@ class Twitter extends ApiBase {
           }
         }
       );
-      return r.data;
+      const r = await this.token();
+      return { class: "twitter.refreshToken", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
   async timeline({
-    authorization,
     user_id,
     since_id,
-    count,
+    count = this.perpage,
     max_id,
     trim_user,
     exclude_replies,
     include_rts
   }) {
     try {
-      this.required({ authorization });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/statuses/user_timeline.json", {
         headers: {
-          authorization
+          authorization: this.authorization
         },
         params: {
           screen_name: this.username,
@@ -82,25 +85,24 @@ class Twitter extends ApiBase {
           ...(include_rts && { include_rts })
         }
       });
-      return r.data;
+      return { class: "twitter.timeline", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 
   async likes({
-    authorization,
     user_id,
     since_id,
-    count,
+    count = this.perpage,
     max_id,
     include_rts
   }) {
     try {
-      this.required({ authorization });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/favorites/list.json", {
         headers: {
-          authorization
+          authorization: this.authorization
         },
         params: {
           screen_name: this.username,
@@ -111,7 +113,7 @@ class Twitter extends ApiBase {
           ...(include_rts && { include_rts })
         }
       });
-      return r.data;
+      return { class: "twitter.likes", data: r.data };
     } catch (err) {
       this.error(err);
     }

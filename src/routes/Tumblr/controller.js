@@ -2,12 +2,11 @@ import { ApiBase, Utils } from "@/helpers";
 
 const TUMBLR_BLOGNAME = process.env.TUMBLR_BLOGNAME;
 const TUMBLR_CONSUMER_KEY = process.env.TUMBLR_CONSUMER_KEY;
-const TUMBLR_CONSUMER_SECRET = process.env.TUMBLR_CONSUMER_SECRET;
 const API_URL = "https://api.tumblr.com/v2";
 
 class Tumblr extends ApiBase {
-  constructor(blogname, consumer_key, consumer_secret) {
-    Utils.required({ blogname, consumer_key, consumer_secret });
+  constructor(blogname, consumer_key) {
+    Utils.required({ blogname, consumer_key });
     super(
       { baseURL: API_URL },
       {
@@ -17,14 +16,13 @@ class Tumblr extends ApiBase {
     );
     this.blogname = blogname;
     this.consumer_key = consumer_key;
-    this.consumer_secret = consumer_secret;
   }
 
   async bloginfo({ blogname = this.blogname } = {}) {
     try {
       let r = await this.client.get(`/blog/${blogname}/info`);
       r.data.response.blog.avatar = `${API_URL}/blog/${blogname}/avatar/512`;
-      return r.data;
+      return { class: "tumblr.bloginfo", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -46,7 +44,7 @@ class Tumblr extends ApiBase {
           ...(after && { after })
         }
       });
-      return r.data;
+      return { class: "tumblr.likes", data: r.data };
     } catch (err) {
       this.error(err);
     }
@@ -78,15 +76,11 @@ class Tumblr extends ApiBase {
           ...(before && { before })
         }
       });
-      return r.data;
+      return { class: "tumblr.posts", data: r.data };
     } catch (err) {
       this.error(err);
     }
   }
 }
 
-export default new Tumblr(
-  TUMBLR_BLOGNAME,
-  TUMBLR_CONSUMER_KEY,
-  TUMBLR_CONSUMER_SECRET
-);
+export default new Tumblr(TUMBLR_BLOGNAME, TUMBLR_CONSUMER_KEY);
