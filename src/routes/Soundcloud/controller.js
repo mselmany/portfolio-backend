@@ -15,6 +15,7 @@ class Soundcloud extends ApiBase {
     );
     this.user_id = user_id;
     this.client_id = client_id;
+    this.authorization = client_id;
   }
 
   async user({ limit = this.perpage, linked_partitioning = 1 } = {}) {
@@ -104,6 +105,30 @@ class Soundcloud extends ApiBase {
       this.required({ id });
       const r = await this.client.get(`/tracks/${id}`);
       return { class: "soundcloud.track", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        user: this.user(),
+        playlists: this.playlists(),
+        comments: this.comments(),
+        favorites: this.favorites(),
+        tracks: this.tracks()
+      };
+      return {
+        class: "soundcloud.bundle",
+        data: {
+          user: await r.user,
+          playlists: await r.playlists,
+          comments: await r.comments,
+          favorites: await r.favorites,
+          tracks: await r.tracks
+        }
+      };
     } catch (err) {
       this.error(err);
     }

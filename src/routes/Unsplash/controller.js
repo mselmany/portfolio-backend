@@ -19,7 +19,7 @@ class Unsplash extends ApiBase {
       }
     );
     this.username = username;
-    this.access_key = access_key;
+    this.authorization = access_key;
   }
 
   async profile({ page, per_page = this.perpage } = {}) {
@@ -99,6 +99,30 @@ class Unsplash extends ApiBase {
         }
       });
       return { class: "unsplash.statistics", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        profile: this.profile(),
+        photos: this.photos(),
+        likes: this.likes(),
+        collections: this.collections(),
+        statistics: this.statistics()
+      };
+      return {
+        class: "unsplash.bundle",
+        data: {
+          profile: await r.profile,
+          photos: await r.photos,
+          likes: await r.likes,
+          collections: await r.collections,
+          statistics: await r.statistics
+        }
+      };
     } catch (err) {
       this.error(err);
     }

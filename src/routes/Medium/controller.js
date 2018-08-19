@@ -14,6 +14,7 @@ class Medium extends ApiBase {
       }
     );
     this.username = username;
+    this.authorization = true;
   }
 
   static parser(type, _data) {

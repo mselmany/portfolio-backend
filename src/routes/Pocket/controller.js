@@ -18,7 +18,7 @@ class Pocket extends ApiBase {
       }
     );
     this.consumer_key = consumer_key;
-    this.access_token;
+    this.authorization;
   }
 
   async authorize({ redirect_uri } = {}) {
@@ -43,7 +43,7 @@ class Pocket extends ApiBase {
         consumer_key: this.consumer_key,
         code
       });
-      this.access_token = r.data.access_token;
+      this.authorization = r.data.access_token;
       return { class: "pocket.token", data: r.data };
     } catch (err) {
       this.error(err);
@@ -58,11 +58,11 @@ class Pocket extends ApiBase {
   } = {}) {
     try {
       this.required({
-        access_token: this.access_token,
+        authorization: this.authorization,
         consumer_key: this.consumer_key
       });
       const r = await this.client.post("/get", {
-        access_token: this.access_token,
+        access_token: this.authorization,
         consumer_key: this.consumer_key,
         state: "all",
         sort: "newest",
@@ -78,13 +78,14 @@ class Pocket extends ApiBase {
   }
 
   async _bundle() {
-    if (!this.access_token) {
-      return "auth needed!";
+    try {
+      let r = {
+        bookmarks: this.bookmarks()
+      };
+      return { class: "pocket.bundle", data: { bookmarks: await r.bookmarks } };
+    } catch (err) {
+      this.error(err);
     }
-    let r = {
-      bookmarks: this.bookmarks()
-    };
-    return { class: "pocket.bundle", data: { bookmarks: await r.bookmarks } };
   }
 }
 

@@ -38,7 +38,7 @@ class Twitter extends ApiBase {
     }
   }
 
-  async refreshToken({ access_token }) {
+  async refreshToken({ access_token } = {}) {
     try {
       this.required({ access_token });
       await this.client.post(
@@ -67,7 +67,7 @@ class Twitter extends ApiBase {
     trim_user,
     exclude_replies,
     include_rts
-  }) {
+  } = {}) {
     try {
       this.required({ authorization: this.authorization });
       const r = await this.client.get("/statuses/user_timeline.json", {
@@ -97,7 +97,7 @@ class Twitter extends ApiBase {
     count = this.perpage,
     max_id,
     include_rts
-  }) {
+  } = {}) {
     try {
       this.required({ authorization: this.authorization });
       const r = await this.client.get("/favorites/list.json", {
@@ -114,6 +114,24 @@ class Twitter extends ApiBase {
         }
       });
       return { class: "twitter.likes", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        timeline: this.timeline(),
+        likes: this.likes()
+      };
+      return {
+        class: "twitter.bundle",
+        data: {
+          timeline: await r.timeline,
+          likes: await r.likes
+        }
+      };
     } catch (err) {
       this.error(err);
     }

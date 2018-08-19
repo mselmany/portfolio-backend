@@ -8,6 +8,7 @@ class Github extends ApiBase {
     Utils.required({ username });
     super({ baseURL: API_URL });
     this.username = username;
+    this.authorization = true;
   }
 
   async events({ page, per_page = this.perpage } = {}) {

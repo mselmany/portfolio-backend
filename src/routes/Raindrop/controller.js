@@ -8,6 +8,7 @@ class Raindrop extends ApiBase {
     Utils.required({ collection_id });
     super({ baseURL: API_URL });
     this.collection_id = collection_id;
+    this.authorization = true;
   }
 
   async collection({ collection_id = this.collection_id } = {}) {
@@ -46,6 +47,21 @@ class Raindrop extends ApiBase {
       this.required({ id });
       const r = await this.client.get(`/bookmark/${id}`);
       return { class: "raindrop.bookmark", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        collection: this.collection(),
+        bookmarks: this.bookmarks()
+      };
+      return {
+        class: "raindrop.bundle",
+        data: { collection: await r.collection, bookmarks: await r.bookmarks }
+      };
     } catch (err) {
       this.error(err);
     }

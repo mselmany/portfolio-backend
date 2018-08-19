@@ -12,7 +12,7 @@ class Instagram extends ApiBase {
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri;
-    this.access_token;
+    this.authorization;
   }
 
   authorize({ redirect_uri } = {}) {
@@ -53,7 +53,7 @@ class Instagram extends ApiBase {
           "Content-Type": "application/x-www-form-urlencoded"
         }
       });
-      this.access_token = r.data.access_token;
+      this.authorization = r.data.access_token;
       return { class: "instagram.token", data: r.data };
     } catch (err) {
       this.error(err);
@@ -62,10 +62,10 @@ class Instagram extends ApiBase {
 
   async user() {
     try {
-      this.required({ access_token: this.access_token });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/users/self", {
         params: {
-          access_token: this.access_token
+          access_token: this.authorization
         }
       });
       return { class: "instagram.user", data: r.data };
@@ -76,10 +76,10 @@ class Instagram extends ApiBase {
 
   async media({ min_id, max_id, count = this.perpage } = {}) {
     try {
-      this.required({ access_token: this.access_token });
+      this.required({ authorization: this.authorization });
       const r = await this.client.get("/users/self/media/recent", {
         params: {
-          access_token: this.access_token,
+          access_token: this.authorization,
           ...(min_id && { min_id }),
           ...(max_id && { max_id }),
           ...(count && { count })

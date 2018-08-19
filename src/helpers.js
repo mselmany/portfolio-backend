@@ -54,6 +54,12 @@ export class ApiBase {
     }
   }
 
+  get isGranted() {
+    return this.hasOwnProperty("authorization") && this.authorization
+      ? true
+      : false;
+  }
+
   error(err) {
     Utils.error(err);
   }

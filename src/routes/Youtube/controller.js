@@ -15,10 +15,13 @@ class Youtube extends ApiBase {
       }
     );
     this.channel_id = channel_id;
-    this.api_key = api_key;
+    this.authorization = api_key;
   }
 
   static parser(type, payload) {
+    if (!payload.items.length) {
+      return {};
+    }
     switch (type) {
       case "activities": {
         let { items, prevPageToken, nextPageToken, pageInfo } = payload;
@@ -149,6 +152,22 @@ class Youtube extends ApiBase {
         }
       });
       return { class: "youtube.video", data: Youtube.parser("video", r.data) };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        activities: this.activities()
+      };
+      return {
+        class: "youtube.bundle",
+        data: {
+          activities: await r.activities
+        }
+      };
     } catch (err) {
       this.error(err);
     }

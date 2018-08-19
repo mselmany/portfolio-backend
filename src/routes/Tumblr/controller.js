@@ -16,6 +16,7 @@ class Tumblr extends ApiBase {
     );
     this.blogname = blogname;
     this.consumer_key = consumer_key;
+    this.authorization = consumer_key;
   }
 
   async bloginfo({ blogname = this.blogname } = {}) {
@@ -77,6 +78,26 @@ class Tumblr extends ApiBase {
         }
       });
       return { class: "tumblr.posts", data: r.data };
+    } catch (err) {
+      this.error(err);
+    }
+  }
+
+  async _bundle() {
+    try {
+      let r = {
+        bloginfo: this.bloginfo(),
+        likes: this.likes(),
+        posts: this.posts()
+      };
+      return {
+        class: "tumblr.bundle",
+        data: {
+          bloginfo: await r.bloginfo,
+          likes: await r.likes,
+          posts: await r.posts
+        }
+      };
     } catch (err) {
       this.error(err);
     }
