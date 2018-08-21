@@ -12,81 +12,97 @@ class Github extends ApiBase {
   }
 
   async events({ page, per_page = this.perpage } = {}) {
-    try {
-      const r = await this.client.get(`/users/${this.username}/events`, {
-        params: {
-          ...(page && { page }),
-          ...(per_page && { per_page })
-        }
-      });
-      return { class: "github.events", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "github.events",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/users/${this.username}/events`, {
+      params: {
+        ...(page && { page }),
+        ...(per_page && { per_page })
+      }
+    });
+    return { success: true, class: "github.events", data: r.data };
   }
 
   async watchers({ page, per_page = this.perpage } = {}) {
-    try {
-      const r = await this.client.get(`/users/${this.username}/subscriptions`, {
-        params: {
-          ...(page && { page }),
-          ...(per_page && { per_page })
-        }
-      });
-      return { class: "github.watchers", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "github.watchers",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/users/${this.username}/subscriptions`, {
+      params: {
+        ...(page && { page }),
+        ...(per_page && { per_page })
+      }
+    });
+    return { success: true, class: "github.watchers", data: r.data };
   }
 
   async stars({ page, per_page = this.perpage } = {}) {
-    try {
-      const r = await this.client.get(`/users/${this.username}/starred`, {
-        params: {
-          ...(page && { page }),
-          ...(per_page && { per_page })
-        }
-      });
-      return { class: "github.stars", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "github.stars",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/users/${this.username}/starred`, {
+      params: {
+        ...(page && { page }),
+        ...(per_page && { per_page })
+      }
+    });
+    return { success: true, class: "github.stars", data: r.data };
   }
 
   async gists({ page, per_page = this.perpage } = {}) {
-    try {
-      const r = await this.client.get(`/users/${this.username}/gists`, {
-        params: {
-          ...(page && { page }),
-          ...(per_page && { per_page })
-        }
-      });
-      return { class: "github.gists", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "github.gists",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/users/${this.username}/gists`, {
+      params: {
+        ...(page && { page }),
+        ...(per_page && { per_page })
+      }
+    });
+    return { success: true, class: "github.gists", data: r.data };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        events: this.events(),
-        watchers: this.watchers(),
-        stars: this.stars(),
-        gists: this.gists()
-      };
+  async _bucket() {
+    if (!this.isGranted) {
       return {
-        class: "github.bundle",
-        data: {
-          events: await r.events,
-          watchers: await r.watchers,
-          stars: await r.stars,
-          gists: await r.gists
-        }
+        success: false,
+        class: "github.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      events: this.events(),
+      watchers: this.watchers(),
+      stars: this.stars(),
+      gists: this.gists()
+    };
+    return {
+      success: true,
+      class: "github.bucket",
+      data: {
+        events: await r.events,
+        watchers: await r.watchers,
+        stars: await r.stars,
+        gists: await r.gists
+      }
+    };
   }
 }
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import Timeline from "./Timeline";
+import Bucket from "./Bucket";
 import Twitter from "./Twitter";
 import Dribbble from "./Dribbble";
 import Github from "./Github";
@@ -14,7 +14,7 @@ import Unsplash from "./Unsplash";
 
 const router = Router();
 
-router.use(Timeline);
+router.use(Bucket);
 router.use("/twitter", Twitter);
 router.use("/dribbble", Dribbble);
 router.use("/github", Github);

@@ -22,32 +22,35 @@ class Pocket extends ApiBase {
   }
 
   async authorize({ redirect_uri } = {}) {
-    try {
-      this.required({ redirect_uri });
-      const r = await this.client.post("/oauth/request", {
-        consumer_key: this.consumer_key,
-        redirect_uri
-      });
-      return `https://getpocket.com/auth/authorize?request_token=${
-        r.data.code
-      }&redirect_uri=${redirect_uri}?code=${r.data.code}`;
-    } catch (err) {
-      this.error(err);
-    }
+    this.required({ redirect_uri });
+    const r = await this.client.post("/oauth/request", {
+      consumer_key: this.consumer_key,
+      redirect_uri
+    });
+    return `https://getpocket.com/auth/authorize?request_token=${
+      r.data.code
+    }&redirect_uri=${redirect_uri}?code=${r.data.code}`;
   }
 
   async token({ code } = {}) {
-    try {
-      this.required({ code });
-      const r = await this.client.post("/oauth/authorize", {
-        consumer_key: this.consumer_key,
-        code
-      });
-      this.authorization = r.data.access_token;
-      return { class: "pocket.token", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (this.isGranted) {
+      return {
+        success: false,
+        class: "pocket.token",
+        data: this.messages.ALREADY_EXIST
+      };
     }
+    this.required({ code });
+    const r = await this.client.post("/oauth/authorize", {
+      consumer_key: this.consumer_key,
+      code
+    });
+    this.authorization = r.data.access_token;
+    return {
+      success: true,
+      class: "pocket.token",
+      data: this.messages.ACCESS_GRANTED
+    };
   }
 
   async bookmarks({
@@ -56,36 +59,46 @@ class Pocket extends ApiBase {
     offset,
     count = this.perpage
   } = {}) {
-    try {
-      this.required({
-        authorization: this.authorization,
-        consumer_key: this.consumer_key
-      });
-      const r = await this.client.post("/get", {
-        access_token: this.authorization,
-        consumer_key: this.consumer_key,
-        state: "all",
-        sort: "newest",
-        detailType,
-        ...(since && { since }),
-        ...(offset && { offset }),
-        ...(count && { count })
-      });
-      return { class: "pocket.bookmarks", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "pocket.bookmarks",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({
+      authorization: this.authorization,
+      consumer_key: this.consumer_key
+    });
+    const r = await this.client.post("/get", {
+      access_token: this.authorization,
+      consumer_key: this.consumer_key,
+      state: "all",
+      sort: "newest",
+      detailType,
+      ...(since && { since }),
+      ...(offset && { offset }),
+      ...(count && { count })
+    });
+    return { success: true, class: "pocket.bookmarks", data: r.data };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        bookmarks: this.bookmarks()
+  async _bucket() {
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "pocket.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-      return { class: "pocket.bundle", data: { bookmarks: await r.bookmarks } };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      bookmarks: this.bookmarks()
+    };
+    return {
+      success: true,
+      class: "pocket.bucket",
+      data: { bookmarks: await r.bookmarks }
+    };
   }
 }
 

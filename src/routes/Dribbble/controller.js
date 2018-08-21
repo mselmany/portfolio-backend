@@ -15,82 +15,98 @@ class Dribbble extends ApiBase {
   }
 
   authorize() {
-    try {
-      return `${AUTH_URL}/authorize?client_id=${this.client_id}`;
-    } catch (err) {
-      this.error(err);
-    }
+    return `${AUTH_URL}/authorize?client_id=${this.client_id}`;
   }
 
   // have to be redirect via authorize()
   async token({ code } = {}) {
-    try {
-      this.required({ code });
-      const r = await this.client.post(
-        "/token",
-        {},
-        {
-          baseURL: AUTH_URL,
-          params: {
-            client_id: this.client_id,
-            client_secret: this.client_secret,
-            code
-          }
-        }
-      );
-      const { token_type, access_token } = r.data;
-      this.authorization = `${token_type} ${access_token}`;
-      return { class: "dribbble.token", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (this.isGranted) {
+      return {
+        success: false,
+        class: "dribbble.token",
+        data: this.messages.ALREADY_EXIST
+      };
     }
+    this.required({ code });
+    const r = await this.client.post(
+      "/token",
+      {},
+      {
+        baseURL: AUTH_URL,
+        params: {
+          client_id: this.client_id,
+          client_secret: this.client_secret,
+          code
+        }
+      }
+    );
+    const { token_type, access_token } = r.data;
+    this.authorization = `${token_type} ${access_token}`;
+    return {
+      success: true,
+      class: "dribbble.token",
+      data: this.messages.ACCESS_GRANTED
+    };
   }
 
   async shots({ page, perpage = this.perpage } = {}) {
-    try {
-      this.required({ authorization: this.authorization });
-      const r = await this.client.get("/user/shots", {
-        headers: {
-          authorization: this.authorization
-        },
-        params: {
-          ...(page && { page }),
-          ...(perpage && { perpage })
-        }
-      });
-      return { class: "dribbble.shots", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "dribbble.shots",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({ authorization: this.authorization });
+    const r = await this.client.get("/user/shots", {
+      headers: {
+        authorization: this.authorization
+      },
+      params: {
+        ...(page && { page }),
+        ...(perpage && { perpage })
+      }
+    });
+    return { success: true, class: "dribbble.shots", data: r.data };
   }
 
-  /*   
+  /* 
   // ! This endpoint supported only approved apps by Dribbble. If you want to fetch your likes please submit your app to Dribbble support team.
   async likes({ page, perpage = this.perpage } = {}) {
-    try {
-      this.required({ authorization: this.authorization });
-      const r = await this.client.get("/user/likes", {
-        headers: {
-          authorization: this.authorization
-        },
-        params: {
-          ...(page && { page }),
-          ...(perpage && { perpage })
-        }
-      });
-      return { class: "dribbble.likes", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "dribbble.likes",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({ authorization: this.authorization });
+    const r = await this.client.get("/user/likes", {
+      headers: {
+        authorization: this.authorization
+      },
+      params: {
+        ...(page && { page }),
+        ...(perpage && { perpage })
+      }
+    });
+    return { success: true, class: "dribbble.likes", data: r.data };
   } */
 
-  async _bundle() {
-    try {
-      let r = { shots: this.shots() };
-      return { class: "dribbble.bundle", data: { shots: await r.shots } };
-    } catch (err) {
-      this.error(err);
+  async _bucket() {
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "dribbble.bucket",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    let r = { shots: this.shots() };
+    return {
+      success: true,
+      class: "dribbble.bucket",
+      data: { shots: await r.shots }
+    };
   }
 }
 

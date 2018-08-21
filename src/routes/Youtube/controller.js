@@ -86,26 +86,30 @@ class Youtube extends ApiBase {
     publishedBefore,
     publishedAfter
   } = {}) {
-    try {
-      const r = await this.client.get("/activities", {
-        params: {
-          channelId: this.channel_id,
-          part: "snippet,contentDetails",
-          fields:
-            "etag,items(contentDetails,etag,id,kind,snippet(channelTitle,description,publishedAt,thumbnails(medium,standard),title,type)),kind,nextPageToken,pageInfo,prevPageToken,tokenPagination",
-          maxResults: limit,
-          ...(pageToken && { pageToken }),
-          ...(publishedBefore && { publishedBefore }),
-          ...(publishedAfter && { publishedAfter })
-        }
-      });
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "youtube.activities",
-        data: Youtube.parser("activities", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    const r = await this.client.get("/activities", {
+      params: {
+        channelId: this.channel_id,
+        part: "snippet,contentDetails",
+        fields:
+          "etag,items(contentDetails,etag,id,kind,snippet(channelTitle,description,publishedAt,thumbnails(medium,standard),title,type)),kind,nextPageToken,pageInfo,prevPageToken,tokenPagination",
+        maxResults: limit,
+        ...(pageToken && { pageToken }),
+        ...(publishedBefore && { publishedBefore }),
+        ...(publishedAfter && { publishedAfter })
+      }
+    });
+    return {
+      success: true,
+      class: "youtube.activities",
+      data: Youtube.parser("activities", r.data)
+    };
   }
 
   async playlist({
@@ -115,62 +119,77 @@ class Youtube extends ApiBase {
     publishedBefore,
     publishedAfter
   } = {}) {
-    try {
-      this.required({ id });
-      const r = await this.client.get("/playlistItems", {
-        params: {
-          channelId: this.channel_id,
-          playlistId: id,
-          part: "snippet,contentDetails",
-          fields:
-            "etag,items(contentDetails,etag,id,kind,snippet(channelTitle,description,publishedAt,thumbnails(medium,standard),title)),kind,nextPageToken,pageInfo,prevPageToken,tokenPagination",
-          maxResults: limit,
-          ...(pageToken && { pageToken }),
-          ...(publishedBefore && { publishedBefore }),
-          ...(publishedAfter && { publishedAfter })
-        }
-      });
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "youtube.playlist",
-        data: Youtube.parser("playlist", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    this.required({ id });
+    const r = await this.client.get("/playlistItems", {
+      params: {
+        channelId: this.channel_id,
+        playlistId: id,
+        part: "snippet,contentDetails",
+        fields:
+          "etag,items(contentDetails,etag,id,kind,snippet(channelTitle,description,publishedAt,thumbnails(medium,standard),title)),kind,nextPageToken,pageInfo,prevPageToken,tokenPagination",
+        maxResults: limit,
+        ...(pageToken && { pageToken }),
+        ...(publishedBefore && { publishedBefore }),
+        ...(publishedAfter && { publishedAfter })
+      }
+    });
+    return {
+      success: true,
+      class: "youtube.playlist",
+      data: Youtube.parser("playlist", r.data)
+    };
   }
 
   async video({ id, videoCategoryId } = {}) {
-    try {
-      this.required({ id });
-      const r = await this.client.get("/videos", {
-        params: {
-          id,
-          part: "snippet,contentDetails,statistics",
-          fields:
-            "items(contentDetails(definition,duration),id,snippet(categoryId,publishedAt,tags),statistics)",
-          ...(videoCategoryId && { videoCategoryId })
-        }
-      });
-      return { class: "youtube.video", data: Youtube.parser("video", r.data) };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "youtube.video",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({ id });
+    const r = await this.client.get("/videos", {
+      params: {
+        id,
+        part: "snippet,contentDetails,statistics",
+        fields:
+          "items(contentDetails(definition,duration),id,snippet(categoryId,publishedAt,tags),statistics)",
+        ...(videoCategoryId && { videoCategoryId })
+      }
+    });
+    return {
+      success: true,
+      class: "youtube.video",
+      data: Youtube.parser("video", r.data)
+    };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        activities: this.activities()
-      };
+  async _bucket() {
+    if (!this.isGranted) {
       return {
-        class: "youtube.bundle",
-        data: {
-          activities: await r.activities
-        }
+        success: false,
+        class: "youtube.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      activities: this.activities()
+    };
+    return {
+      success: true,
+      class: "youtube.bucket",
+      data: {
+        activities: await r.activities
+      }
+    };
   }
 }
 

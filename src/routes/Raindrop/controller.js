@@ -12,12 +12,15 @@ class Raindrop extends ApiBase {
   }
 
   async collection({ collection_id = this.collection_id } = {}) {
-    try {
-      const r = await this.client.get(`/collection/${collection_id}`);
-      return { class: "raindrop.collection", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "raindrop.collection",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/collection/${collection_id}`);
+    return { success: true, class: "raindrop.collection", data: r.data };
   }
 
   async bookmarks({
@@ -27,44 +30,54 @@ class Raindrop extends ApiBase {
     search,
     sort
   } = {}) {
-    try {
-      const r = await this.client.get(`/bookmarks/${collection_id}`, {
-        params: {
-          ...(page && { page }),
-          ...(perpage && { perpage }),
-          ...(search && { search }),
-          ...(sort && { sort })
-        }
-      });
-      return { class: "raindrop.bookmarks", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "raindrop.bookmarks",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get(`/bookmarks/${collection_id}`, {
+      params: {
+        ...(page && { page }),
+        ...(perpage && { perpage }),
+        ...(search && { search }),
+        ...(sort && { sort })
+      }
+    });
+    return { success: true, class: "raindrop.bookmarks", data: r.data };
   }
 
   async bookmark({ id } = {}) {
-    try {
-      this.required({ id });
-      const r = await this.client.get(`/bookmark/${id}`);
-      return { class: "raindrop.bookmark", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "raindrop.bookmark",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({ id });
+    const r = await this.client.get(`/bookmark/${id}`);
+    return { success: true, class: "raindrop.bookmark", data: r.data };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        collection: this.collection(),
-        bookmarks: this.bookmarks()
-      };
+  async _bucket() {
+    if (!this.isGranted) {
       return {
-        class: "raindrop.bundle",
-        data: { collection: await r.collection, bookmarks: await r.bookmarks }
+        success: false,
+        class: "raindrop.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      collection: this.collection(),
+      bookmarks: this.bookmarks()
+    };
+    return {
+      success: true,
+      class: "raindrop.bucket",
+      data: { collection: await r.collection, bookmarks: await r.bookmarks }
+    };
   }
 }
 

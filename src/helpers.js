@@ -39,6 +39,7 @@ export class Utils {
 export class ApiBase {
   constructor(axiosConfig = {}, { interceptor } = {}) {
     Utils.required({ baseURL: axiosConfig.baseURL });
+    this.messages = messages;
     this.perpage = 10;
     this.client = axios.create(axiosConfig);
     if (interceptor instanceof Function) {

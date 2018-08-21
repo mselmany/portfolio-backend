@@ -18,45 +18,59 @@ class Twitter extends ApiBase {
   }
 
   async token() {
-    try {
-      const r = await this.client.post(
-        "/token",
-        "grant_type=client_credentials",
-        {
-          baseURL: AUTH_URL,
-          headers: {
-            Authorization: `Basic ${this.credentials}`,
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-          }
-        }
-      );
-      const { token_type, access_token } = r.data;
-      this.authorization = `${token_type} ${access_token}`;
-      return { class: "twitter.token", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (this.isGranted) {
+      return {
+        success: false,
+        class: "twitter.token",
+        data: this.messages.ALREADY_EXIST
+      };
     }
+    const r = await this.client.post(
+      "/token",
+      "grant_type=client_credentials",
+      {
+        baseURL: AUTH_URL,
+        headers: {
+          Authorization: `Basic ${this.credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        }
+      }
+    );
+    const { token_type, access_token } = r.data;
+    this.authorization = `${token_type} ${access_token}`;
+    return {
+      success: true,
+      class: "twitter.token",
+      data: this.messages.ACCESS_GRANTED
+    };
   }
 
   async refreshToken({ access_token } = {}) {
-    try {
-      this.required({ access_token });
-      await this.client.post(
-        "/invalidate_token",
-        `access_token=${access_token}`,
-        {
-          baseURL: AUTH_URL,
-          headers: {
-            Authorization: `Basic ${this.credentials}`,
-            "Content-Type": "application/x-www-form-urlencoded;"
-          }
-        }
-      );
-      const r = await this.token();
-      return { class: "twitter.refreshToken", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "twitter.refreshToken",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    this.required({ access_token });
+    await this.client.post(
+      "/invalidate_token",
+      `access_token=${access_token}`,
+      {
+        baseURL: AUTH_URL,
+        headers: {
+          Authorization: `Basic ${this.credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded;"
+        }
+      }
+    );
+    await this.token();
+    return {
+      success: true,
+      class: "twitter.refreshToken",
+      data: this.messages.ACCESS_GRANTED
+    };
   }
 
   async timeline({
@@ -68,27 +82,29 @@ class Twitter extends ApiBase {
     exclude_replies,
     include_rts
   } = {}) {
-    try {
-      this.required({ authorization: this.authorization });
-      const r = await this.client.get("/statuses/user_timeline.json", {
-        headers: {
-          authorization: this.authorization
-        },
-        params: {
-          screen_name: this.username,
-          ...(user_id && { user_id }),
-          ...(since_id && { since_id }),
-          ...(count && { count }),
-          ...(max_id && { max_id }),
-          ...(trim_user && { trim_user }),
-          ...(exclude_replies && { exclude_replies }),
-          ...(include_rts && { include_rts })
-        }
-      });
-      return { class: "twitter.timeline", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "twitter.timeline",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get("/statuses/user_timeline.json", {
+      headers: {
+        authorization: this.authorization
+      },
+      params: {
+        screen_name: this.username,
+        ...(user_id && { user_id }),
+        ...(since_id && { since_id }),
+        ...(count && { count }),
+        ...(max_id && { max_id }),
+        ...(trim_user && { trim_user }),
+        ...(exclude_replies && { exclude_replies }),
+        ...(include_rts && { include_rts })
+      }
+    });
+    return { success: true, class: "twitter.timeline", data: r.data };
   }
 
   async likes({
@@ -98,43 +114,53 @@ class Twitter extends ApiBase {
     max_id,
     include_rts
   } = {}) {
-    try {
-      this.required({ authorization: this.authorization });
-      const r = await this.client.get("/favorites/list.json", {
-        headers: {
-          authorization: this.authorization
-        },
-        params: {
-          screen_name: this.username,
-          ...(user_id && { user_id }),
-          ...(since_id && { since_id }),
-          ...(count && { count }),
-          ...(max_id && { max_id }),
-          ...(include_rts && { include_rts })
-        }
-      });
-      return { class: "twitter.likes", data: r.data };
-    } catch (err) {
-      this.error(err);
+    if (!this.isGranted) {
+      return {
+        success: false,
+        class: "twitter.likes",
+        data: this.messages.NOT_AUTHORIZED
+      };
     }
+    const r = await this.client.get("/favorites/list.json", {
+      headers: {
+        authorization: this.authorization
+      },
+      params: {
+        screen_name: this.username,
+        ...(user_id && { user_id }),
+        ...(since_id && { since_id }),
+        ...(count && { count }),
+        ...(max_id && { max_id }),
+        ...(include_rts && { include_rts })
+      }
+    });
+    return {
+      success: true,
+      class: "twitter.likes",
+      data: r.data
+    };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        timeline: this.timeline(),
-        likes: this.likes()
-      };
+  async _bucket() {
+    if (!this.isGranted) {
       return {
-        class: "twitter.bundle",
-        data: {
-          timeline: await r.timeline,
-          likes: await r.likes
-        }
+        success: false,
+        class: "twitter.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      timeline: this.timeline(),
+      likes: this.likes()
+    };
+    return {
+      success: true,
+      class: "twitter.bucket",
+      data: {
+        timeline: await r.timeline,
+        likes: await r.likes
+      }
+    };
   }
 }
 

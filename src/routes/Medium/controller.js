@@ -261,73 +261,93 @@ class Medium extends ApiBase {
   }
 
   async latest() {
-    try {
-      const r = await this.client.get(`/latest`);
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "medium.latest",
-        data: Medium.parser("latest", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    const r = await this.client.get(`/latest`);
+    return {
+      success: true,
+      class: "medium.latest",
+      data: Medium.parser("latest", r.data)
+    };
   }
 
   async recommended() {
-    try {
-      const r = await this.client.get(`/has-recommended`);
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "medium.recommended",
-        data: Medium.parser("recommended", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    const r = await this.client.get(`/has-recommended`);
+    return {
+      success: true,
+      class: "medium.recommended",
+      data: Medium.parser("recommended", r.data)
+    };
   }
 
   async responses() {
-    try {
-      const r = await this.client.get(`/responses`);
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "medium.responses",
-        data: Medium.parser("responses", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    const r = await this.client.get(`/responses`);
+    return {
+      success: true,
+      class: "medium.responses",
+      data: Medium.parser("responses", r.data)
+    };
   }
 
   async highlights() {
-    try {
-      const r = await this.client.get(`/highlights`);
+    if (!this.isGranted) {
       return {
+        success: false,
         class: "medium.highlights",
-        data: Medium.parser("highlights", r.data)
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    const r = await this.client.get(`/highlights`);
+    return {
+      success: true,
+      class: "medium.highlights",
+      data: Medium.parser("highlights", r.data)
+    };
   }
 
-  async _bundle() {
-    try {
-      let r = {
-        latest: this.latest(),
-        recommended: this.recommended(),
-        responses: this.responses(),
-        highlights: this.highlights()
-      };
+  async _bucket() {
+    if (!this.isGranted) {
       return {
-        class: "medium.bundle",
-        data: {
-          latest: await r.latest,
-          recommended: await r.recommended,
-          responses: await r.responses,
-          highlights: await r.highlights
-        }
+        success: false,
+        class: "medium.bucket",
+        data: this.messages.NOT_AUTHORIZED
       };
-    } catch (err) {
-      this.error(err);
     }
+    let r = {
+      latest: this.latest(),
+      recommended: this.recommended(),
+      responses: this.responses(),
+      highlights: this.highlights()
+    };
+    return {
+      success: true,
+      class: "medium.bucket",
+      data: {
+        latest: await r.latest,
+        recommended: await r.recommended,
+        responses: await r.responses,
+        highlights: await r.highlights
+      }
+    };
   }
 }
 
