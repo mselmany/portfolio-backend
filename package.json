@@ -17,13 +17,13 @@
     "portfolioapp",
     "api",
     "mongodb",
-    "graphql"
+    "expressjs"
   ],
   "scripts": {
     "clean": "rm -rf ./dist",
-    "start-development": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js",
-    "start-development--forked": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js --fork",
-    "start-production": "npm run clean && NODE_ENV=production node-hot --config webpack.config.js"
+    "server:development": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js",
+    "server:development--forked": "npm run clean && NODE_ENV=development node-hot --config webpack.config.js --fork",
+    "server:production": "npm run clean && NODE_ENV=production node-hot --config webpack.config.js"
   },
   "dependencies": {
     "axios": "^0.18.0",
