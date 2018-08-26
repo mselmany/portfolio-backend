@@ -53,12 +53,12 @@ export class ApiBase {
 
     this.initialized = !missing.length;
     if (!this.initialized) {
-      // do not initialize its class
+      // mark as "not initialized"
       const fields = missing.map(item => item[0]).join(", ");
-      console.log(`⚠️ ${this.constructor.name} - Required fields: ${fields}`);
-      return;
+      console.log(`❌ ${this.constructor.name} - Required fields: ${fields}`);
+    } else {
+      console.log(`✅ ${this.constructor.name}`);
     }
-    console.log(`✅ ${this.constructor.name}`);
 
     this.authorization = false;
     this.messages = messages;
