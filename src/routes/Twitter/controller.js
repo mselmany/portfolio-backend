@@ -1,24 +1,25 @@
 import { ApiBase, Utils } from "@/helpers";
 
 const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
-const TWITTER_COMSUMER_KEY = process.env.TWITTER_COMSUMER_KEY;
-const TWITTER_COMSUMER_SECRET = process.env.TWITTER_COMSUMER_SECRET;
+const TWITTER_CONSUMER_KEY = process.env.TWITTER_CONSUMER_KEY;
+const TWITTER_CONSUMER_SECRET = process.env.TWITTER_CONSUMER_SECRET;
 const API_URL = "https://api.twitter.com/1.1";
 const AUTH_URL = "https://api.twitter.com/oauth2";
 
 class Twitter extends ApiBase {
   constructor(username, consumer_key, consumer_secret) {
-    Utils.required({ username, consumer_key, consumer_secret });
-    super({ baseURL: API_URL });
+    super({
+      baseURL: API_URL,
+      init: { username, consumer_key, consumer_secret }
+    });
     this.username = username;
-    this.authorization;
     this.credentials = new Buffer(
       `${consumer_key}:${consumer_secret}`
     ).toString("base64");
   }
 
   async token() {
-    if (this.isGranted) {
+    if (this.granted) {
       return {
         success: false,
         class: "twitter.token",
@@ -46,7 +47,7 @@ class Twitter extends ApiBase {
   }
 
   async refreshToken({ access_token } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "twitter.refreshToken",
@@ -82,7 +83,7 @@ class Twitter extends ApiBase {
     exclude_replies,
     include_rts
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "twitter.timeline",
@@ -114,7 +115,7 @@ class Twitter extends ApiBase {
     max_id,
     include_rts
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "twitter.likes",
@@ -142,7 +143,7 @@ class Twitter extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "twitter.bucket",
@@ -166,6 +167,6 @@ class Twitter extends ApiBase {
 
 export default new Twitter(
   TWITTER_USERNAME,
-  TWITTER_COMSUMER_KEY,
-  TWITTER_COMSUMER_SECRET
+  TWITTER_CONSUMER_KEY,
+  TWITTER_CONSUMER_SECRET
 );

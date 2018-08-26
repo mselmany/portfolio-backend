@@ -1,3 +1,4 @@
+import messages from "@/messages";
 import Twitter from "../Twitter/controller";
 import Dribbble from "../Dribbble/controller";
 import Github from "../Github/controller";
@@ -11,51 +12,64 @@ import Tumblr from "../Tumblr/controller";
 import Unsplash from "../Unsplash/controller";
 
 class Bucket {
-  constructor() {}
-
-  async fetch({ filter } = {}) {
-    const pick = type => filter.toLowerCase().includes(type);
-    const has = type => list.hasOwnProperty(type);
-
-    let list = {
-      ...(pick("twitter") && { Twitter }),
-      ...(pick("dribbble") && { Dribbble }),
-      ...(pick("github") && { Github }),
-      ...(pick("raindrop") && { Raindrop }),
-      ...(pick("soundcloud") && { Soundcloud }),
-      ...(pick("medium") && { Medium }),
-      ...(pick("youtube") && { Youtube }),
-      ...(pick("pocket") && { Pocket }),
-      ...(pick("instagram") && { Instagram }),
-      ...(pick("tumblr") && { Tumblr }),
-      ...(pick("unsplash") && { Unsplash })
+  constructor() {
+    this.items = {
+      Twitter,
+      Dribbble,
+      Github,
+      Raindrop,
+      Soundcloud,
+      Medium,
+      Youtube,
+      Pocket,
+      Instagram,
+      Tumblr,
+      Unsplash
     };
+  }
 
-    for (const key in list) {
-      if (list.hasOwnProperty(key)) {
-        const prop = list[key];
-        if (
-          prop.__proto__.hasOwnProperty("_bucket") &&
-          typeof prop.__proto__._bucket === "function"
-        ) {
-          list[key] = prop._bucket();
-        }
-      }
-    }
+  async list({ filter } = {}) {
+    const filterlist = filter ? filter.toLowerCase().split(",") : false;
 
-    return {
-      ...(has("Twitter") && { Twitter: await list.Twitter }),
-      ...(has("Dribbble") && { Dribbble: await list.Dribbble }),
-      ...(has("Github") && { Github: await list.Github }),
-      ...(has("Raindrop") && { Raindrop: await list.Raindrop }),
-      ...(has("Soundcloud") && { Soundcloud: await list.Soundcloud }),
-      ...(has("Medium") && { Medium: await list.Medium }),
-      ...(has("Youtube") && { Youtube: await list.Youtube }),
-      ...(has("Pocket") && { Pocket: await list.Pocket }),
-      ...(has("Instagram") && { Instagram: await list.Instagram }),
-      ...(has("Tumblr") && { Tumblr: await list.Tumblr }),
-      ...(has("Unsplash") && { Unsplash: await list.Unsplash })
-    };
+    let list = Object.entries(this.items)
+      .filter(kv => {
+        const [k, v] = kv;
+        // filter by filterlist or pick all
+        return filterlist ? filterlist.includes(k.toLowerCase()) : true;
+      })
+      .map(kv => {
+        const [k, v] = kv;
+        // if it has _bucket method, apply it or return null
+        return {
+          [k]:
+            v.__proto__.hasOwnProperty("_bucket") && v.initialized
+              ? v._bucket()
+              : {
+                  success: false,
+                  class: "bucket.list",
+                  data: messages.NOT_INITIALIZED
+                }
+        };
+      });
+
+    // wait applied _buckets
+    let resp = await Promise.all(list.map(i => Object.values(i)[0]));
+
+    let r = {};
+    list.forEach((obj, index) => {
+      // match keys and its _bucket responses by indexes
+      r[Object.keys(obj)[0]] = resp[index];
+    });
+    return r;
+  }
+
+  async status() {
+    let r = {};
+    Object.entries(this.items).forEach(kv => {
+      const [k, v] = kv;
+      r[k] = v.initialized && v.granted;
+    });
+    return r;
   }
 }
 

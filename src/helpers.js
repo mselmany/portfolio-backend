@@ -38,7 +38,29 @@ export class Utils {
 
 export class ApiBase {
   constructor(axiosConfig = {}, { interceptor } = {}) {
-    Utils.required({ baseURL: axiosConfig.baseURL });
+    Utils.required({
+      baseURL: axiosConfig.baseURL,
+      init: axiosConfig.init
+    });
+
+    // if required fields not provided in .env file...
+    let missing = Object.entries(axiosConfig.init).filter(kv => {
+      const [k, v] = kv;
+      if (typeof v === "undefined") {
+        return true;
+      }
+    });
+
+    this.initialized = !missing.length;
+    if (!this.initialized) {
+      // do not initialize its class
+      const fields = missing.map(item => item[0]).join(", ");
+      console.log(`⚠️ ${this.constructor.name} - Required fields: ${fields}`);
+      return;
+    }
+    console.log(`✅ ${this.constructor.name}`);
+
+    this.authorization = false;
     this.messages = messages;
     this.perpage = 10;
     this.client = axios.create(axiosConfig);
@@ -55,7 +77,7 @@ export class ApiBase {
     }
   }
 
-  get isGranted() {
+  get granted() {
     return this.hasOwnProperty("authorization") && this.authorization
       ? true
       : false;

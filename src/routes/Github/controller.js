@@ -5,14 +5,13 @@ const API_URL = "https://api.github.com";
 
 class Github extends ApiBase {
   constructor(username) {
-    Utils.required({ username });
-    super({ baseURL: API_URL });
+    super({ baseURL: API_URL, init: { username } });
     this.username = username;
     this.authorization = true;
   }
 
   async events({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "github.events",
@@ -29,7 +28,7 @@ class Github extends ApiBase {
   }
 
   async watchers({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "github.watchers",
@@ -46,7 +45,7 @@ class Github extends ApiBase {
   }
 
   async stars({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "github.stars",
@@ -63,7 +62,7 @@ class Github extends ApiBase {
   }
 
   async gists({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "github.gists",
@@ -80,7 +79,7 @@ class Github extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "github.bucket",

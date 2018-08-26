@@ -5,14 +5,13 @@ const API_URL = "https://raindrop.io/v1";
 
 class Raindrop extends ApiBase {
   constructor(collection_id) {
-    Utils.required({ collection_id });
-    super({ baseURL: API_URL });
+    super({ baseURL: API_URL, init: { collection_id } });
     this.collection_id = collection_id;
     this.authorization = true;
   }
 
   async collection({ collection_id = this.collection_id } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "raindrop.collection",
@@ -30,7 +29,7 @@ class Raindrop extends ApiBase {
     search,
     sort
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "raindrop.bookmarks",
@@ -49,7 +48,7 @@ class Raindrop extends ApiBase {
   }
 
   async bookmark({ id } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "raindrop.bookmark",
@@ -62,7 +61,7 @@ class Raindrop extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "raindrop.bucket",

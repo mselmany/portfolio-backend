@@ -7,12 +7,10 @@ const AUTH_URL = "https://api.instagram.com/oauth";
 
 class Instagram extends ApiBase {
   constructor(client_id, client_secret) {
-    Utils.required({ client_id, client_secret });
-    super({ baseURL: API_URL });
+    super({ baseURL: API_URL, init: { client_id, client_secret } });
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri;
-    this.authorization;
   }
 
   authorize({ redirect_uri } = {}) {
@@ -31,7 +29,7 @@ class Instagram extends ApiBase {
 
   // have to be redirect via authorize({ redirect_uri })
   async token({ code } = {}) {
-    if (this.isGranted) {
+    if (this.granted) {
       return {
         success: false,
         class: "instagram.token",
@@ -64,7 +62,7 @@ class Instagram extends ApiBase {
   }
 
   async user() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "instagram.user",
@@ -81,7 +79,7 @@ class Instagram extends ApiBase {
   }
 
   async media({ min_id, max_id, count = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "instagram.media",
@@ -105,7 +103,7 @@ class Instagram extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "instagram.bucket",

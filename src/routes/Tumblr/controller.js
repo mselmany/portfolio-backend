@@ -6,9 +6,8 @@ const API_URL = "https://api.tumblr.com/v2";
 
 class Tumblr extends ApiBase {
   constructor(blogname, consumer_key) {
-    Utils.required({ blogname, consumer_key });
     super(
-      { baseURL: API_URL },
+      { baseURL: API_URL, init: { blogname, consumer_key } },
       {
         interceptor: config =>
           (config.params = { ...config.params, api_key: consumer_key })
@@ -20,7 +19,7 @@ class Tumblr extends ApiBase {
   }
 
   async bloginfo({ blogname = this.blogname } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "tumblr.bloginfo",
@@ -39,7 +38,7 @@ class Tumblr extends ApiBase {
     before,
     after
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "tumblr.likes",
@@ -69,7 +68,7 @@ class Tumblr extends ApiBase {
     offset,
     before
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "tumblr.posts",
@@ -93,7 +92,7 @@ class Tumblr extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "tumblr.bucket",

@@ -6,9 +6,8 @@ const API_URL = "https://api.soundcloud.com";
 
 class Soundcloud extends ApiBase {
   constructor(user_id, client_id) {
-    Utils.required({ user_id, client_id });
     super(
-      { baseURL: API_URL },
+      { baseURL: API_URL, init: { user_id, client_id } },
       {
         interceptor: config => (config.params = { ...config.params, client_id })
       }
@@ -19,7 +18,7 @@ class Soundcloud extends ApiBase {
   }
 
   async user({ limit = this.perpage, linked_partitioning = 1 } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.user",
@@ -36,7 +35,7 @@ class Soundcloud extends ApiBase {
   }
 
   async playlists({ limit = this.perpage, linked_partitioning = 1 } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.playlists",
@@ -61,7 +60,7 @@ class Soundcloud extends ApiBase {
     linked_partitioning = 1,
     offset
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.comments",
@@ -88,7 +87,7 @@ class Soundcloud extends ApiBase {
     cursor,
     page_size
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.favorites",
@@ -107,7 +106,7 @@ class Soundcloud extends ApiBase {
   }
 
   async tracks({ limit = this.perpage, linked_partitioning = 1 } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.tracks",
@@ -128,7 +127,7 @@ class Soundcloud extends ApiBase {
   }
 
   async track({ id } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.track",
@@ -141,7 +140,7 @@ class Soundcloud extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "soundcloud.bucket",

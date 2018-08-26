@@ -7,11 +7,9 @@ const AUTH_URL = "https://dribbble.com/oauth";
 
 class Dribbble extends ApiBase {
   constructor(client_id, client_secret) {
-    Utils.required({ client_id, client_secret });
-    super({ baseURL: API_URL });
+    super({ baseURL: API_URL, init: { client_id, client_secret } });
     this.client_id = client_id;
     this.client_secret = client_secret;
-    this.authorization;
   }
 
   authorize() {
@@ -20,7 +18,7 @@ class Dribbble extends ApiBase {
 
   // have to be redirect via authorize()
   async token({ code } = {}) {
-    if (this.isGranted) {
+    if (this.granted) {
       return {
         success: false,
         class: "dribbble.token",
@@ -50,7 +48,7 @@ class Dribbble extends ApiBase {
   }
 
   async shots({ page, perpage = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "dribbble.shots",
@@ -73,7 +71,7 @@ class Dribbble extends ApiBase {
   /* 
   // ! This endpoint supported only approved apps by Dribbble. If you want to fetch your likes please submit your app to Dribbble support team.
   async likes({ page, perpage = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "dribbble.likes",
@@ -94,7 +92,7 @@ class Dribbble extends ApiBase {
   } */
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "dribbble.bucket",

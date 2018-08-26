@@ -6,9 +6,8 @@ const API_URL = "https://www.googleapis.com/youtube/v3";
 
 class Youtube extends ApiBase {
   constructor(channel_id, api_key) {
-    Utils.required({ channel_id, api_key });
     super(
-      { baseURL: API_URL },
+      { baseURL: API_URL, init: { channel_id, api_key } },
       {
         interceptor: config =>
           (config.params = { ...config.params, key: api_key })
@@ -86,7 +85,7 @@ class Youtube extends ApiBase {
     publishedBefore,
     publishedAfter
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "youtube.activities",
@@ -119,7 +118,7 @@ class Youtube extends ApiBase {
     publishedBefore,
     publishedAfter
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "youtube.playlist",
@@ -148,7 +147,7 @@ class Youtube extends ApiBase {
   }
 
   async video({ id, videoCategoryId } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "youtube.video",
@@ -173,7 +172,7 @@ class Youtube extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "youtube.bucket",

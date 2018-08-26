@@ -6,9 +6,8 @@ const API_URL = "https://api.unsplash.com";
 
 class Unsplash extends ApiBase {
   constructor(username, access_key) {
-    Utils.required({ username, access_key });
     super(
-      { baseURL: API_URL },
+      { baseURL: API_URL, init: { username, access_key } },
       {
         interceptor: config =>
           (config.headers = {
@@ -23,7 +22,7 @@ class Unsplash extends ApiBase {
   }
 
   async profile({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.profile",
@@ -51,7 +50,7 @@ class Unsplash extends ApiBase {
     page,
     per_page = this.perpage
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.photos",
@@ -76,7 +75,7 @@ class Unsplash extends ApiBase {
   }
 
   async likes({ order_by, page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.likes",
@@ -98,7 +97,7 @@ class Unsplash extends ApiBase {
   }
 
   async collections({ page, per_page = this.perpage } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.collections",
@@ -119,7 +118,7 @@ class Unsplash extends ApiBase {
   }
 
   async statistics({ resolution, quantity } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.statistics",
@@ -140,7 +139,7 @@ class Unsplash extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "unsplash.bucket",

@@ -5,9 +5,8 @@ const API_URL = "https://medium.com/@";
 
 class Medium extends ApiBase {
   constructor(username) {
-    Utils.required({ username });
     super(
-      { baseURL: API_URL + username },
+      { baseURL: API_URL + username, init: { username } },
       {
         interceptor: config =>
           (config.params = { ...config.params, format: "json" })
@@ -261,7 +260,7 @@ class Medium extends ApiBase {
   }
 
   async latest() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "medium.latest",
@@ -277,7 +276,7 @@ class Medium extends ApiBase {
   }
 
   async recommended() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "medium.recommended",
@@ -293,7 +292,7 @@ class Medium extends ApiBase {
   }
 
   async responses() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "medium.responses",
@@ -309,7 +308,7 @@ class Medium extends ApiBase {
   }
 
   async highlights() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "medium.highlights",
@@ -325,7 +324,7 @@ class Medium extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "medium.bucket",

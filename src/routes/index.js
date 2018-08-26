@@ -14,7 +14,7 @@ import Unsplash from "./Unsplash";
 
 const router = Router();
 
-router.use(Bucket);
+router.use("/bucket", Bucket);
 router.use("/twitter", Twitter);
 router.use("/dribbble", Dribbble);
 router.use("/github", Github);

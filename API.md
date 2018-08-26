@@ -6,8 +6,8 @@ Gerekli bilgileri sağla
 
 ```
 TWITTER_USERNAME = "mselmany"
-TWITTER_COMSUMER_KEY = "S4xh0E**********jBQdTP"
-TWITTER_COMSUMER_SECRET = "L2WNig***************************A2QCV4"
+TWITTER_CONSUMER_KEY = "S4xh0E**********jBQdTP"
+TWITTER_CONSUMER_SECRET = "L2WNig***************************A2QCV4"
 ```
 
 ve [localhost:3001/api/twitter/token](localhost:3001/api/twitter/token) adresine istek at.

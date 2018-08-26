@@ -5,9 +5,8 @@ const API_URL = "https://getpocket.com/v3";
 
 class Pocket extends ApiBase {
   constructor(consumer_key) {
-    Utils.required({ consumer_key });
     super(
-      { baseURL: API_URL },
+      { baseURL: API_URL, init: { consumer_key } },
       {
         interceptor: config =>
           (config.headers = {
@@ -33,7 +32,7 @@ class Pocket extends ApiBase {
   }
 
   async token({ code } = {}) {
-    if (this.isGranted) {
+    if (this.granted) {
       return {
         success: false,
         class: "pocket.token",
@@ -59,7 +58,7 @@ class Pocket extends ApiBase {
     offset,
     count = this.perpage
   } = {}) {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "pocket.bookmarks",
@@ -84,7 +83,7 @@ class Pocket extends ApiBase {
   }
 
   async _bucket() {
-    if (!this.isGranted) {
+    if (!this.granted) {
       return {
         success: false,
         class: "pocket.bucket",

@@ -5,7 +5,7 @@
 ### sosyal medya api - yapılması gerekenler
 
 -Tumblr;
--- ana blogdan data çekilemiyor!!
+-- ana blogdan data çekilemiyor!! (çünkü oda ayarlardan public yapılmalı)
 -- "likes" sadece tumblr ayarlarından beğeniler public ise kullanılabilir.
 
 ### api tokenları - alınan tokenları db ye kaydetme
@@ -20,3 +20,7 @@
 
 - .env dosyasında kullanıcı aktif etmek istemediği hesabı OFF/0 olarak belirlemeli, böylece server ayağa kalktığında gereksiz endpoint oluşturulmamalı
 - Aktif olanlar frontend'deki filterlist'e bildirilmeli ki sadece aktif hesaplarla işlem yapılabilsin.
+
+### active olan apileri anlama
+
+- aktive edilmiş apileri bir endpointten anlayabilelim(frontend de hangi filtrelerin gösterilebileceğini burdan anlıcaz)
