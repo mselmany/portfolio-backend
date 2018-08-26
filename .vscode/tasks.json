@@ -5,12 +5,7 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "start-development",
-      "problemMatcher": []
-    },
-    {
-      "type": "npm",
-      "script": "start-development--forked",
+      "script": "server:development",
       "problemMatcher": []
     }
   ]
