@@ -21,7 +21,7 @@ function startServer() {
       const running = chalk.hex("#10a567").bold("[RUNNING]");
       const reloaded = chalk.hex("#007acc").bold("[RELOADED]");
       const env = chalk.hex("#10a567").bold("[MODE]");
-      const url = chalk.bold(`http://localhost:${port}/`);
+      const url = chalk.bold(`http://localhost:${port}/api/status`);
 
       console.info(
         `${running} 🌎  Listening on ${port}. Open up "${url}" in your browser.`
