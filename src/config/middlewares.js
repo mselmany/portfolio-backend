@@ -22,7 +22,7 @@ export default (express, app) => {
   app.use(
     cors({
       credentials: true,
-      origin: process.env.FRONT_ORIGIN // ! TODO:  Change allowed origin url for production
+      origin: process.env.FRONT_ORIGIN
     })
   );
   app.use(methodOverride());

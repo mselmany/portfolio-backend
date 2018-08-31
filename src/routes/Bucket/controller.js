@@ -23,7 +23,7 @@ class Bucket {
       Youtube,
       Pocket,
       Instagram,
-      Tumblr,
+      // Tumblr, // !TODO: tumblr gizlilik sorunu yüzünden fail veriyor, hepsinin faile düşmesine sebep oluyor. promise.all yerine teker teker awaitle yapabilirsin
       Unsplash
     };
   }
@@ -40,26 +40,24 @@ class Bucket {
       .map(kv => {
         const [k, v] = kv;
         // if it has _bucket method, apply it or return null
-        return {
-          [k]:
-            v.__proto__.hasOwnProperty("_bucket") && v.initialized
-              ? v._bucket()
-              : {
-                  success: false,
-                  class: "bucket.list",
-                  data: messages.NOT_INITIALIZED
-                }
-        };
+        return [
+          k,
+          v.__proto__.hasOwnProperty("_bucket") && v.initialized
+            ? v._bucket()
+            : {
+                success: false,
+                class: "bucket.list",
+                data: messages.NOT_INITIALIZED
+              }
+        ];
       });
 
     // wait applied _buckets
-    let resp = await Promise.all(list.map(i => Object.values(i)[0]));
-
     let r = {};
-    list.forEach((obj, index) => {
-      // match keys and its _bucket responses by indexes
-      r[Object.keys(obj)[0]] = resp[index];
-    });
+    for (const kv of list) {
+      const [k, v] = kv;
+      r = { ...r, [k]: await v };
+    }
     return r;
   }
 
