@@ -23,7 +23,7 @@ class Bucket {
       Youtube,
       Pocket,
       Instagram,
-      // Tumblr, // !TODO: tumblr gizlilik sorunu yüzünden fail veriyor, hepsinin faile düşmesine sebep oluyor. promise.all yerine teker teker awaitle yapabilirsin
+      Tumblr, // !TODO: tumblr gizlilik sorunu yüzünden fail veriyor, hepsinin faile düşmesine sebep oluyor. promise.all yerine teker teker awaitle yapabilirsin
       Unsplash
     };
   }
@@ -53,11 +53,13 @@ class Bucket {
       });
 
     // wait applied _buckets
+    let resp = await Promise.all(list.map(item => item[1]));
+
     let r = {};
-    for (const kv of list) {
-      const [k, v] = kv;
-      r = { ...r, [k]: await v };
-    }
+    list.forEach((item, index) => {
+      // match keys and its _bucket responses by indexes
+      r[item[0]] = resp[index];
+    });
     return r;
   }
 
