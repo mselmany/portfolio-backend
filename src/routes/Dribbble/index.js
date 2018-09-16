@@ -20,6 +20,15 @@ router.get("/token", async function(req, res, next) {
   }
 });
 
+router.get("/user", async function(req, res, next) {
+  try {
+    const r = await Dribbble.user();
+    res.status(200).json(r);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/shots", async function(req, res, next) {
   try {
     const r = await Dribbble.shots({ ...req.query });

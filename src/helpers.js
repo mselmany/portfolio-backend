@@ -62,7 +62,7 @@ export class ApiBase {
 
     this.authorization = false;
     this.messages = messages;
-    this.perpage = 10;
+    this.perpage = 30;
     this.client = axios.create(axiosConfig);
     if (interceptor instanceof Function) {
       this.client.interceptors.request.use(
@@ -81,6 +81,14 @@ export class ApiBase {
     return this.hasOwnProperty("authorization") && this.authorization
       ? true
       : false;
+  }
+
+  serializer(data, { name, type } = {}) {
+    this.required({ name, type });
+    return data.map(item => {
+      item.__source = { name, type };
+      return item;
+    });
   }
 
   error(err) {

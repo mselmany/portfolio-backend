@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const RAINDROP_COLLECTION_ID = process.env.RAINDROP_COLLECTION_ID;
 const API_URL = "https://raindrop.io/v1";
@@ -10,16 +10,121 @@ class Raindrop extends ApiBase {
     this.authorization = true;
   }
 
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    switch (type) {
+      case "collection": {
+        let {
+          _id,
+          title,
+          user,
+          excerpt,
+          background,
+          created,
+          count,
+          shortLink,
+          cover
+        } = payload.item;
+
+        return {
+          __source: { name, type, form },
+          _id,
+          title,
+          user: user.$id,
+          excerpt,
+          background,
+          created,
+          count,
+          shortLink,
+          cover: cover && cover.length && cover[0]
+        };
+      }
+
+      case "bookmarks": {
+        let { items, collectionId } = payload;
+        return items.map(item => {
+          const {
+            _id,
+            user,
+            link,
+            title,
+            excerpt,
+            cover,
+            domain,
+            lastUpdate,
+            tags,
+            media
+          } = item;
+
+          return {
+            __source: { name, type, form },
+            collectionId,
+            type: item.type,
+            _id,
+            user: user.$id,
+            link,
+            title,
+            excerpt,
+            cover,
+            domain,
+            lastUpdate,
+            tags,
+            media
+          };
+        });
+      }
+
+      case "bookmark": {
+        const {
+          collection,
+          _id,
+          user,
+          link,
+          title,
+          excerpt,
+          cover,
+          domain,
+          lastUpdate,
+          tags,
+          media
+        } = payload.item;
+
+        return {
+          __source: { name, type, form },
+          collectionId: collection.$id,
+          type: payload.item.type,
+          _id,
+          user: user.$id,
+          link,
+          title,
+          excerpt,
+          cover,
+          domain,
+          lastUpdate,
+          tags,
+          media
+        };
+      }
+
+      default: {
+        return payload;
+      }
+    }
+  }
+
   async collection({ collection_id = this.collection_id } = {}) {
+    const source = {
+      name: "raindrop",
+      type: "collection",
+      form: "staticitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "raindrop.collection",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/collection/${collection_id}`);
-    return { success: true, class: "raindrop.collection", data: r.data };
+    return { success: true, source, data: Raindrop.parser(source, r.data) };
   }
 
   async bookmarks({
@@ -29,12 +134,9 @@ class Raindrop extends ApiBase {
     search,
     sort
   } = {}) {
+    const source = { name: "raindrop", type: "bookmarks", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "raindrop.bookmarks",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/bookmarks/${collection_id}`, {
       params: {
@@ -44,38 +146,44 @@ class Raindrop extends ApiBase {
         ...(sort && { sort })
       }
     });
-    return { success: true, class: "raindrop.bookmarks", data: r.data };
+    return { success: true, source, data: Raindrop.parser(source, r.data) };
   }
 
   async bookmark({ id } = {}) {
+    const source = { name: "raindrop", type: "bookmark", form: "staticitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "raindrop.bookmark",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ id });
     const r = await this.client.get(`/bookmark/${id}`);
-    return { success: true, class: "raindrop.bookmark", data: r.data };
+    return { success: true, source, data: Raindrop.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "raindrop",
+      type: "bucket",
+      form: "staticitems|listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "raindrop.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = {
       collection: this.collection(),
       bookmarks: this.bookmarks()
     };
+    let d = {
+      collection: await r.collection,
+      bookmarks: await r.bookmarks
+    };
+
     return {
       success: true,
-      class: "raindrop.bucket",
-      data: { collection: await r.collection, bookmarks: await r.bookmarks }
+      source,
+      data: {
+        staticitems: d.collection.data,
+        listitems: d.bookmarks.data
+      }
     };
   }
 }

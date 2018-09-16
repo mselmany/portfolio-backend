@@ -3,6 +3,15 @@ import Medium from "./controller";
 
 const router = Router();
 
+router.get("/user", async function(req, res, next) {
+  try {
+    const r = await Medium.user();
+    res.status(200).json(r);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/latest", async function(req, res, next) {
   try {
     const r = await Medium.latest();

@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const TUMBLR_BLOGNAME = process.env.TUMBLR_BLOGNAME;
 const TUMBLR_CONSUMER_KEY = process.env.TUMBLR_CONSUMER_KEY;
@@ -18,17 +18,198 @@ class Tumblr extends ApiBase {
     this.authorization = consumer_key;
   }
 
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    switch (type) {
+      case "user": {
+        let {
+          id,
+          username,
+          permalink_url,
+          avatar_url,
+          country,
+          city,
+          full_name,
+          description,
+          track_count,
+          playlist_count,
+          public_favorites_count,
+          followers_count,
+          followings_count,
+          reposts_count
+        } = payload;
+
+        return {
+          __source: { name, type, form },
+          id,
+          username,
+          permalink_url,
+          avatar_url,
+          country,
+          city,
+          full_name,
+          description,
+          track_count,
+          playlist_count,
+          public_favorites_count,
+          followers_count,
+          followings_count,
+          reposts_count
+        };
+      }
+
+      case "comments": {
+        return payload.collection.map(item => {
+          const {
+            id,
+            kind,
+            created_at,
+            user_id,
+            track_id,
+            timestamp,
+            body
+          } = item;
+
+          return {
+            __source: { name, type, form },
+            id,
+            kind,
+            created_at: new Date(created_at).getTime(),
+            user_id,
+            track_id,
+            timestamp,
+            body
+          };
+        });
+      }
+
+      case "favorites":
+      case "tracks": {
+        return payload.collection.map(item => {
+          const {
+            id,
+            kind,
+            created_at,
+            user_id,
+            duration,
+            tag_list,
+            permalink_url,
+            artwork_url,
+            waveform_url,
+            stream_url,
+            playback_count,
+            favoritings_count,
+            comment_count,
+            purchase_url,
+            genre,
+            title,
+            description,
+            label_name,
+            original_format,
+            user
+          } = item;
+
+          return {
+            __source: { name, type, form },
+            id,
+            kind,
+            created_at: new Date(created_at).getTime(),
+            user_id,
+            duration,
+            tag_list,
+            permalink_url,
+            artwork_url,
+            waveform_url,
+            stream_url,
+            playback_count,
+            favoritings_count,
+            comment_count,
+            purchase_url,
+            genre,
+            title,
+            description,
+            label_name,
+            original_format,
+            user: {
+              id: user.id,
+              username: user.username,
+              permalink_url: user.permalink_url,
+              avatar_url: user.avatar_url
+            }
+          };
+        });
+      }
+
+      case "track": {
+        const {
+          id,
+          kind,
+          created_at,
+          user_id,
+          duration,
+          tag_list,
+          permalink_url,
+          artwork_url,
+          waveform_url,
+          stream_url,
+          playback_count,
+          favoritings_count,
+          comment_count,
+          purchase_url,
+          genre,
+          title,
+          description,
+          label_name,
+          original_format,
+          user
+        } = payload;
+
+        return {
+          __source: { name, type, form },
+          id,
+          kind,
+          created_at: new Date(created_at).getTime(),
+          user_id,
+          duration,
+          tag_list,
+          permalink_url,
+          artwork_url,
+          waveform_url,
+          stream_url,
+          playback_count,
+          favoritings_count,
+          comment_count,
+          purchase_url,
+          genre,
+          title,
+          description,
+          label_name,
+          original_format,
+          user: {
+            id: user.id,
+            username: user.username,
+            permalink_url: user.permalink_url,
+            avatar_url: user.avatar_url
+          }
+        };
+      }
+
+      default: {
+        return payload;
+      }
+    }
+  }
+
   async bloginfo({ blogname = this.blogname } = {}) {
+    const source = { name: "tumblr", type: "bloginfo", form: "staticitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "tumblr.bloginfo",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = await this.client.get(`/blog/${blogname}/info`);
     r.data.response.blog.avatar = `${API_URL}/blog/${blogname}/avatar/512`;
-    return { success: true, class: "tumblr.bloginfo", data: r.data };
+    return { success: true, source, data: Tumblr.parser(source, r.data) };
   }
 
   async likes({
@@ -38,12 +219,9 @@ class Tumblr extends ApiBase {
     before,
     after
   } = {}) {
+    const source = { name: "tumblr", type: "likes", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "tumblr.likes",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = await this.client.get(`/blog/${blogname}/likes`, {
       params: {
@@ -53,7 +231,7 @@ class Tumblr extends ApiBase {
         ...(after && { after })
       }
     });
-    return { success: true, class: "tumblr.likes", data: r.data };
+    return { success: true, source, data: Tumblr.parser(source, r.data) };
   }
 
   async posts({
@@ -68,12 +246,9 @@ class Tumblr extends ApiBase {
     offset,
     before
   } = {}) {
+    const source = { name: "tumblr", type: "posts", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "tumblr.posts",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const _type = type ? `/${type}` : "";
     let r = await this.client.get(`/blog/${blogname}/posts${_type}`, {
@@ -88,29 +263,37 @@ class Tumblr extends ApiBase {
         ...(before && { before })
       }
     });
-    return { success: true, class: "tumblr.posts", data: r.data };
+    return { success: true, source, data: Tumblr.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "tumblr",
+      type: "bucket",
+      form: "staticitems|listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "tumblr.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = {
       bloginfo: this.bloginfo(),
       likes: this.likes(),
       posts: this.posts()
     };
+    let d = {
+      bloginfo: await r.bloginfo,
+      likes: await r.likes,
+      posts: await r.posts
+    };
+
     return {
       success: true,
-      class: "tumblr.bucket",
+      source,
       data: {
-        bloginfo: await r.bloginfo,
-        likes: await r.likes,
-        posts: await r.posts
+        staticitems: d.bloginfo.data,
+        listitems: [...d.likes.data, ...d.posts.data].sort(
+          (a, b) => b.created_at - a.created_at
+        )
       }
     };
   }

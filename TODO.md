@@ -2,6 +2,10 @@
 
 ## GENEL YAPILACAKLAR
 
+### Redis ile cachleme yapılacak
+
+- sosyal medya apileri için cachleme yapılacak.
+
 ### sosyal medya api - yapılması gerekenler
 
 -Tumblr;

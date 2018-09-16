@@ -23,12 +23,17 @@ class Bucket {
       Youtube,
       Pocket,
       Instagram,
-      Tumblr, // !TODO: tumblr gizlilik sorunu yüzünden fail veriyor, hepsinin faile düşmesine sebep oluyor. promise.all yerine teker teker awaitle yapabilirsin
+      // Tumblr, // !TODO: tumblr gizlilik sorunu yüzünden fail veriyor, hepsinin faile düşmesine sebep oluyor. promise.all yerine teker teker awaitle yapabilirsin
       Unsplash
     };
+
+    this.cache = null;
   }
 
   async list({ filter } = {}) {
+    if (this.cache) {
+      return this.cache;
+    }
     const filterlist = filter ? filter.toLowerCase().split(",") : false;
 
     let list = Object.entries(this.items)
@@ -42,7 +47,7 @@ class Bucket {
         // if it has _bucket method, apply it or return null
         return [
           k,
-          v.__proto__.hasOwnProperty("_bucket") && v.initialized
+          v.__proto__.hasOwnProperty("_bucket") && v.initialized && v.granted
             ? v._bucket()
             : {
                 success: false,
@@ -58,8 +63,11 @@ class Bucket {
     let r = {};
     list.forEach((item, index) => {
       // match keys and its _bucket responses by indexes
-      r[item[0]] = resp[index];
+      if (resp[index].success) {
+        r[item[0]] = resp[index];
+      }
     });
+    // this.cache = r;
     return r;
   }
 

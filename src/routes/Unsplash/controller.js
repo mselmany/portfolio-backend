@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const UNSPLASH_USERNAME = process.env.UNSPLASH_USERNAME;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;

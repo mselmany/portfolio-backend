@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const INSTAGRAM_CLIENT_ID = process.env.INSTAGRAM_CLIENT_ID;
 const INSTAGRAM_CLIENT_SECRET = process.env.INSTAGRAM_CLIENT_SECRET;
@@ -11,6 +11,88 @@ class Instagram extends ApiBase {
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri;
+  }
+
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    switch (type) {
+      case "user": {
+        payload.data.__source = { name, type, form };
+        return payload.data;
+      }
+
+      case "media": {
+        return payload.data.map(_item => {
+          const {
+            id,
+            created_time,
+            caption,
+            likes,
+            comments,
+            tags,
+            link,
+            location,
+            filter,
+            users_in_photo,
+            images,
+            videos,
+            carousel_media
+          } = _item;
+
+          let media = [];
+          switch (_item.type) {
+            case "carousel": {
+              media = carousel_media.map(it => {
+                return {
+                  type: it.type,
+                  content:
+                    it[it.type === "video" ? "videos" : "images"]
+                      .standard_resolution.url
+                };
+              });
+              break;
+            }
+
+            case "image": {
+              media = [
+                { type: _item.type, content: images.standard_resolution.url }
+              ];
+              break;
+            }
+
+            case "video": {
+              media = [
+                { type: _item.type, content: videos.standard_resolution.url }
+              ];
+              break;
+            }
+
+            default:
+              break;
+          }
+
+          return {
+            __source: { name, type, form },
+            id,
+            created_time,
+            text: caption && caption.text,
+            likes: likes.count,
+            comments: comments.count,
+            tags,
+            link,
+            location: location && location.name,
+            filter,
+            users_in_photo: users_in_photo.map(it => it.user.username),
+            media
+          };
+        });
+      }
+
+      default:
+        return payload;
+    }
   }
 
   authorize({ redirect_uri } = {}) {
@@ -62,12 +144,9 @@ class Instagram extends ApiBase {
   }
 
   async user() {
+    const source = { name: "instagram", type: "user", form: "staticitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "instagram.user",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ authorization: this.authorization });
     const r = await this.client.get("/users/self", {
@@ -75,16 +154,17 @@ class Instagram extends ApiBase {
         access_token: this.authorization
       }
     });
-    return { success: true, class: "instagram.user", data: r.data };
+    return {
+      success: true,
+      source,
+      data: Instagram.parser(source, r.data)
+    };
   }
 
   async media({ min_id, max_id, count = this.perpage } = {}) {
+    const source = { name: "instagram", type: "media", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "instagram.media",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ authorization: this.authorization });
     const r = await this.client.get("/users/self/media/recent", {
@@ -95,26 +175,25 @@ class Instagram extends ApiBase {
         ...(count && { count })
       }
     });
-    return {
-      success: true,
-      class: "instagram.media",
-      data: r.data
-    };
+    return { success: true, source, data: Instagram.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "instagram",
+      type: "bucket",
+      form: "staticitems|listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "instagram.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = { user: this.user(), media: this.media() };
+    let d = { user: await r.user, media: await r.media };
+
     return {
       success: true,
-      class: "instagram.bucket",
-      data: { user: await r.user, media: await r.media }
+      source,
+      data: { staticitems: d.user.data, listitems: d.media.data }
     };
   }
 }

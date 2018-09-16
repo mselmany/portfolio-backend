@@ -3,6 +3,15 @@ import Github from "./controller";
 
 const router = Router();
 
+router.get("/user", async function(req, res, next) {
+  try {
+    const r = await Github.user();
+    res.status(200).json(r);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/events", async function(req, res, next) {
   try {
     const r = await Github.events({ ...req.query });

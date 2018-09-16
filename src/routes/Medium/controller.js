@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const MEDIUM_USERNAME = process.env.MEDIUM_USERNAME;
 const API_URL = "https://medium.com/@";
@@ -16,20 +16,42 @@ class Medium extends ApiBase {
     this.authorization = true;
   }
 
-  static parser(type, _data) {
-    let data = JSON.parse(_data.replace("])}while(1);</x>", ""));
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    try {
+      var data = JSON.parse(payload.replace("])}while(1);</x>", ""));
+    } catch (err) {
+      return [];
+    }
     switch (type) {
-      case "latest": {
+      case "user": {
         let { user, userMeta, references } = data.payload;
-        let { name, userId, username, imageId, bio } = user;
-        let { Post, SocialStats } = references;
+        let { userId, username, imageId, bio } = user;
+        let { SocialStats } = references;
 
         const { numberOfPostsPublished } = userMeta;
         const { usersFollowedCount, usersFollowedByCount } = SocialStats[
           userId
         ];
 
-        let items = Object.values(Post).map(item => {
+        return {
+          __source: { name, type, form },
+          userId,
+          name: user.name,
+          username,
+          imageId,
+          bio,
+          usersFollowedCount,
+          usersFollowedByCount,
+          numberOfPostsPublished
+        };
+      }
+
+      case "latest": {
+        let { Post } = data.payload.references;
+        return Object.values(Post).map(item => {
           const { id, title, createdAt, virtuals } = item;
           const {
             subtitle,
@@ -41,6 +63,7 @@ class Medium extends ApiBase {
           } = virtuals;
 
           return {
+            __source: { name, type, form },
             id,
             title,
             createdAt,
@@ -52,32 +75,11 @@ class Medium extends ApiBase {
             responsesCreatedCount
           };
         });
-
-        return {
-          type,
-          userId,
-          name,
-          username,
-          imageId,
-          bio,
-          usersFollowedCount,
-          usersFollowedByCount,
-          numberOfPostsPublished,
-          items
-        };
       }
 
       case "recommended": {
-        let { user, userMeta, references } = data.payload;
-        let { name, userId, username, imageId, bio } = user;
-        let { User, Post, SocialStats } = references;
-
-        const { numberOfPostsPublished } = userMeta;
-        const { usersFollowedCount, usersFollowedByCount } = SocialStats[
-          userId
-        ];
-
-        let items = Object.values(Post).map(item => {
+        let { Post, User } = data.payload.references;
+        return Object.values(Post).map(item => {
           const { id, title, createdAt, creatorId, virtuals } = item;
           const {
             subtitle,
@@ -87,10 +89,10 @@ class Medium extends ApiBase {
             totalClapCount,
             responsesCreatedCount
           } = virtuals;
-
           const _creator = User[creatorId];
 
           return {
+            __source: { name, type, form },
             id,
             title,
             createdAt,
@@ -109,33 +111,13 @@ class Medium extends ApiBase {
             }
           };
         });
-
-        return {
-          type,
-          userId,
-          name,
-          username,
-          imageId,
-          bio,
-          usersFollowedCount,
-          usersFollowedByCount,
-          numberOfPostsPublished,
-          items
-        };
       }
 
       case "responses": {
-        let { user, userMeta, references } = data.payload;
-        let { name, userId, username, imageId, bio } = user;
-        let { User, Post, SocialStats } = references;
-
-        const { numberOfPostsPublished } = userMeta;
-        const { usersFollowedCount, usersFollowedByCount } = SocialStats[
-          userId
-        ];
-
-        let items = Object.values(Post)
-          .filter(item => item.creatorId === userId)
+        let { user, references } = data.payload;
+        let { Post, User } = references;
+        return Object.values(Post)
+          .filter(item => item.creatorId === user.userId)
           .map(item => {
             const {
               id,
@@ -176,6 +158,7 @@ class Medium extends ApiBase {
             };
 
             return {
+              __source: { name, type, form },
               id,
               createdAt,
               readingTime,
@@ -186,36 +169,16 @@ class Medium extends ApiBase {
               text
             };
           });
-
-        return {
-          type,
-          userId,
-          name,
-          username,
-          imageId,
-          bio,
-          usersFollowedCount,
-          usersFollowedByCount,
-          numberOfPostsPublished,
-          items
-        };
       }
 
       case "highlights": {
-        let { user, userMeta, references } = data.payload;
-        let { name, userId, username, imageId, bio } = user;
-        let { Quote, User, Post, SocialStats } = references;
-
-        const { numberOfPostsPublished } = userMeta;
-        const { usersFollowedCount, usersFollowedByCount } = SocialStats[
-          userId
-        ];
-
-        let items = Object.values(Quote).map(item => {
+        let { Quote, User, Post } = data.payload.references;
+        return Object.values(Quote).map(item => {
           let _post = Post[item.postId];
           let _creator = User[_post.creatorId];
 
           return {
+            __source: { name, type, form },
             id: item.quoteId,
             createdAt: item.createdAt,
             text: item.quoteParagraphPreview.text,
@@ -238,19 +201,6 @@ class Medium extends ApiBase {
             }
           };
         });
-
-        return {
-          type,
-          userId,
-          name,
-          username,
-          imageId,
-          bio,
-          usersFollowedCount,
-          usersFollowedByCount,
-          numberOfPostsPublished,
-          items
-        };
       }
 
       default: {
@@ -259,92 +209,86 @@ class Medium extends ApiBase {
     }
   }
 
-  async latest() {
+  async user() {
+    const source = { name: "medium", type: "user", form: "staticitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "medium.latest",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
+    }
+    const r = await this.client.get(`/`);
+    return { success: true, source, data: Medium.parser(source, r.data) };
+  }
+
+  async latest() {
+    const source = { name: "medium", type: "latest", form: "listitems" };
+    if (!this.granted) {
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/latest`);
-    return {
-      success: true,
-      class: "medium.latest",
-      data: Medium.parser("latest", r.data)
-    };
+    return { success: true, source, data: Medium.parser(source, r.data) };
   }
 
   async recommended() {
+    const source = { name: "medium", type: "recommended", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "medium.recommended",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/has-recommended`);
-    return {
-      success: true,
-      class: "medium.recommended",
-      data: Medium.parser("recommended", r.data)
-    };
+    return { success: true, source, data: Medium.parser(source, r.data) };
   }
 
   async responses() {
+    const source = { name: "medium", type: "responses", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "medium.responses",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/responses`);
-    return {
-      success: true,
-      class: "medium.responses",
-      data: Medium.parser("responses", r.data)
-    };
+    return { success: true, source, data: Medium.parser(source, r.data) };
   }
 
   async highlights() {
+    const source = { name: "medium", type: "highlights", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "medium.highlights",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get(`/highlights`);
-    return {
-      success: true,
-      class: "medium.highlights",
-      data: Medium.parser("highlights", r.data)
-    };
+    return { success: true, source, data: Medium.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "medium",
+      type: "bucket",
+      form: "staticitems|listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "medium.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = {
+      user: this.user(),
       latest: this.latest(),
       recommended: this.recommended(),
       responses: this.responses(),
       highlights: this.highlights()
     };
+    let d = {
+      user: await r.user,
+      latest: await r.latest,
+      recommended: await r.recommended,
+      responses: await r.responses,
+      highlights: await r.highlights
+    };
+
     return {
       success: true,
-      class: "medium.bucket",
+      source,
       data: {
-        latest: await r.latest,
-        recommended: await r.recommended,
-        responses: await r.responses,
-        highlights: await r.highlights
+        staticitems: d.user.data,
+        listitems: [
+          ...d.latest.data,
+          ...d.recommended.data,
+          ...d.responses.data,
+          ...d.highlights.data
+        ].sort((a, b) => b.createdAt - a.createdAt)
       }
     };
   }

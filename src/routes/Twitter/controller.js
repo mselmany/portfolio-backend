@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
 const TWITTER_CONSUMER_KEY = process.env.TWITTER_CONSUMER_KEY;
@@ -18,13 +18,194 @@ class Twitter extends ApiBase {
     ).toString("base64");
   }
 
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    switch (type) {
+      case "user": {
+        let {
+          id,
+          username,
+          permalink_url,
+          avatar_url,
+          country,
+          city,
+          full_name,
+          description,
+          track_count,
+          playlist_count,
+          public_favorites_count,
+          followers_count,
+          followings_count,
+          reposts_count
+        } = payload;
+
+        return {
+          __source: { name, type, form },
+          id,
+          username,
+          permalink_url,
+          avatar_url,
+          country,
+          city,
+          full_name,
+          description,
+          track_count,
+          playlist_count,
+          public_favorites_count,
+          followers_count,
+          followings_count,
+          reposts_count
+        };
+      }
+
+      case "comments": {
+        return payload.collection.map(item => {
+          const {
+            id,
+            kind,
+            created_at,
+            user_id,
+            track_id,
+            timestamp,
+            body
+          } = item;
+
+          return {
+            __source: { name, type, form },
+            id,
+            kind,
+            created_at: new Date(created_at).getTime(),
+            user_id,
+            track_id,
+            timestamp,
+            body
+          };
+        });
+      }
+
+      case "favorites":
+      case "tracks": {
+        return payload.collection.map(item => {
+          const {
+            id,
+            kind,
+            created_at,
+            user_id,
+            duration,
+            tag_list,
+            permalink_url,
+            artwork_url,
+            waveform_url,
+            stream_url,
+            playback_count,
+            favoritings_count,
+            comment_count,
+            purchase_url,
+            genre,
+            title,
+            description,
+            label_name,
+            original_format,
+            user
+          } = item;
+
+          return {
+            __source: { name, type, form },
+            id,
+            kind,
+            created_at: new Date(created_at).getTime(),
+            user_id,
+            duration,
+            tag_list,
+            permalink_url,
+            artwork_url,
+            waveform_url,
+            stream_url,
+            playback_count,
+            favoritings_count,
+            comment_count,
+            purchase_url,
+            genre,
+            title,
+            description,
+            label_name,
+            original_format,
+            user: {
+              id: user.id,
+              username: user.username,
+              permalink_url: user.permalink_url,
+              avatar_url: user.avatar_url
+            }
+          };
+        });
+      }
+
+      case "track": {
+        const {
+          id,
+          kind,
+          created_at,
+          user_id,
+          duration,
+          tag_list,
+          permalink_url,
+          artwork_url,
+          waveform_url,
+          stream_url,
+          playback_count,
+          favoritings_count,
+          comment_count,
+          purchase_url,
+          genre,
+          title,
+          description,
+          label_name,
+          original_format,
+          user
+        } = payload;
+
+        return {
+          __source: { name, type, form },
+          id,
+          kind,
+          created_at: new Date(created_at).getTime(),
+          user_id,
+          duration,
+          tag_list,
+          permalink_url,
+          artwork_url,
+          waveform_url,
+          stream_url,
+          playback_count,
+          favoritings_count,
+          comment_count,
+          purchase_url,
+          genre,
+          title,
+          description,
+          label_name,
+          original_format,
+          user: {
+            id: user.id,
+            username: user.username,
+            permalink_url: user.permalink_url,
+            avatar_url: user.avatar_url
+          }
+        };
+      }
+
+      default: {
+        return payload;
+      }
+    }
+  }
+
   async token() {
-    if (this.granted) {
-      return {
-        success: false,
-        class: "twitter.token",
-        data: this.messages.ALREADY_EXIST
-      };
+    const source = { name: "twitter", type: "token", form: "staticitems" };
+    if (!this.granted) {
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.post(
       "/token",
@@ -39,20 +220,17 @@ class Twitter extends ApiBase {
     );
     const { token_type, access_token } = r.data;
     this.authorization = `${token_type} ${access_token}`;
-    return {
-      success: true,
-      class: "twitter.token",
-      data: this.messages.ACCESS_GRANTED
-    };
+    return { success: true, source, data: this.messages.ACCESS_GRANTED };
   }
 
   async refreshToken({ access_token } = {}) {
+    const source = {
+      name: "twitter",
+      type: "refreshToken",
+      form: "staticitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "twitter.refreshToken",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ access_token });
     await this.client.post(
@@ -67,11 +245,7 @@ class Twitter extends ApiBase {
       }
     );
     await this.token();
-    return {
-      success: true,
-      class: "twitter.refreshToken",
-      data: this.messages.ACCESS_GRANTED
-    };
+    return { success: true, source, data: this.messages.ACCESS_GRANTED };
   }
 
   async timeline({
@@ -83,12 +257,9 @@ class Twitter extends ApiBase {
     exclude_replies,
     include_rts
   } = {}) {
+    const source = { name: "twitter", type: "timeline", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "twitter.timeline",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get("/statuses/user_timeline.json", {
       headers: {
@@ -105,7 +276,7 @@ class Twitter extends ApiBase {
         ...(include_rts && { include_rts })
       }
     });
-    return { success: true, class: "twitter.timeline", data: r.data };
+    return { success: true, source, data: Twitter.parser(source, r.data) };
   }
 
   async likes({
@@ -115,12 +286,9 @@ class Twitter extends ApiBase {
     max_id,
     include_rts
   } = {}) {
+    const source = { name: "twitter", type: "likes", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "twitter.likes",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get("/favorites/list.json", {
       headers: {
@@ -135,31 +303,32 @@ class Twitter extends ApiBase {
         ...(include_rts && { include_rts })
       }
     });
-    return {
-      success: true,
-      class: "twitter.likes",
-      data: r.data
-    };
+    return { success: true, source, data: Twitter.parser(source, r.data) };
   }
 
   async _bucket() {
-    if (!this.granted) {
-      return {
-        success: false,
-        class: "twitter.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
-    }
-    let r = {
-      timeline: this.timeline(),
-      likes: this.likes()
+    const source = {
+      name: "twitter",
+      type: "bucket",
+      form: "staticitems|listitems"
     };
+    if (!this.granted) {
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
+    }
+    let r = { timeline: this.timeline(), likes: this.likes() };
+    let d = {
+      timeline: await r.timeline,
+      likes: await r.likes
+    };
+
     return {
       success: true,
-      class: "twitter.bucket",
+      source,
       data: {
-        timeline: await r.timeline,
-        likes: await r.likes
+        staticitems: {},
+        listitems: [...d.timeline.data, ...d.likes.data].sort(
+          (a, b) => b.created_at - a.created_at
+        )
       }
     };
   }

@@ -1,4 +1,4 @@
-import { ApiBase, Utils } from "@/helpers";
+import { ApiBase } from "@/helpers";
 
 const POCKET_CONSUMER_KEY = process.env.POCKET_CONSUMER_KEY;
 const API_URL = "https://getpocket.com/v3";
@@ -18,6 +18,54 @@ class Pocket extends ApiBase {
     );
     this.consumer_key = consumer_key;
     this.authorization;
+  }
+
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
+    }
+    switch (type) {
+      case "bookmarks": {
+        let { list, since } = payload;
+
+        return Object.values(list)
+          .map(item => {
+            const {
+              item_id,
+              given_url,
+              given_title,
+              favorite,
+              time_added,
+              excerpt,
+              top_image_url,
+              is_article,
+              word_count,
+              lang,
+              time_to_read
+            } = item;
+
+            return {
+              __source: { name, type, form },
+              item_id,
+              given_url,
+              given_title,
+              favorite: favorite === "1",
+              time_added: time_added * 1000,
+              excerpt,
+              top_image_url: top_image_url || "",
+              is_article: is_article === "1",
+              word_count,
+              lang,
+              time_to_read
+            };
+          })
+          .sort((a, b) => b.time_added - a.time_added);
+      }
+
+      default: {
+        return payload;
+      }
+    }
   }
 
   async authorize({ redirect_uri } = {}) {
@@ -54,16 +102,14 @@ class Pocket extends ApiBase {
 
   async bookmarks({
     detailType = "simple",
+    favorite,
     since,
     offset,
     count = this.perpage
   } = {}) {
+    const source = { name: "pocket", type: "bookmarks", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "pocket.bookmarks",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({
       authorization: this.authorization,
@@ -75,28 +121,34 @@ class Pocket extends ApiBase {
       state: "all",
       sort: "newest",
       detailType,
+      ...(favorite && { favorite }),
       ...(since && { since }),
       ...(offset && { offset }),
       ...(count && { count })
     });
-    return { success: true, class: "pocket.bookmarks", data: r.data };
+    return { success: true, source, data: Pocket.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "pocket",
+      type: "bucket",
+      form: "staticitems|listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "pocket.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = {
       bookmarks: this.bookmarks()
     };
+    let d = {
+      bookmarks: await r.bookmarks
+    };
+
     return {
       success: true,
-      class: "pocket.bucket",
-      data: { bookmarks: await r.bookmarks }
+      source,
+      data: { staticitems: {}, listitems: d.bookmarks.data }
     };
   }
 }
