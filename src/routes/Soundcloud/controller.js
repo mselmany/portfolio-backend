@@ -80,6 +80,10 @@ class Soundcloud extends ApiBase {
             description
           } = item;
 
+          tracks.map(item => {
+            item.playlist_id = id;
+          });
+
           playlistsTracks = [...playlistsTracks, ...tracks];
 
           return {
@@ -102,6 +106,7 @@ class Soundcloud extends ApiBase {
 
         let tracks = playlistsTracks.map(item => {
           const {
+            playlist_id,
             id,
             kind,
             created_at,
@@ -126,6 +131,7 @@ class Soundcloud extends ApiBase {
 
           return {
             __source: { name, type, form: "listitems" },
+            playlist_id,
             id,
             kind,
             created_at: new Date(created_at).getTime(),
@@ -412,14 +418,14 @@ class Soundcloud extends ApiBase {
     }
     let r = {
       user: this.user(),
-      playlists: this.playlists(),
+      // playlists: this.playlists(),
       comments: this.comments(),
       favorites: this.favorites(),
       tracks: this.tracks()
     };
     let d = {
       user: await r.user,
-      playlists: await r.playlists,
+      // playlists: await r.playlists,
       comments: await r.comments,
       favorites: await r.favorites,
       tracks: await r.tracks
@@ -430,14 +436,14 @@ class Soundcloud extends ApiBase {
       source,
       data: {
         staticitems: {
-          user: d.user.data,
-          playlists: d.playlists.data.staticitems
+          user: d.user.data
+          // playlists: d.playlists.data.staticitems
         },
         listitems: [
           ...d.tracks.data,
           ...d.favorites.data,
-          ...d.comments.data,
-          ...d.playlists.data.listitems
+          ...d.comments.data
+          // ...d.playlists.data.listitems
         ]
       }
     };

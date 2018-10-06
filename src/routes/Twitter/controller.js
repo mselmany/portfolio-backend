@@ -23,40 +23,51 @@ class Twitter extends ApiBase {
       return [];
     }
     switch (type) {
-      case "user": {
+      case "timelines": {
         let {
-          id,
-          username,
-          permalink_url,
-          avatar_url,
-          country,
-          city,
-          full_name,
-          description,
-          track_count,
-          playlist_count,
-          public_favorites_count,
-          followers_count,
-          followings_count,
-          reposts_count
+          id_str,
+          created_at,
+          text,
+          retweet_count,
+          favorite_count,
+          favorited,
+          retweeted,
+          entities,
+          user
         } = payload;
+
+        let _user;
+        {
+          _user = {
+            id_str,
+            name,
+            screen_name,
+            location,
+            description,
+            url,
+            entities,
+            followers_count,
+            friends_count,
+            favourites_count,
+            verified,
+            statuses_count,
+            lang,
+            profile_banner_url,
+            profile_image_url_https
+          } = user;
+        }
 
         return {
           __source: { name, type, form },
-          id,
-          username,
-          permalink_url,
-          avatar_url,
-          country,
-          city,
-          full_name,
-          description,
-          track_count,
-          playlist_count,
-          public_favorites_count,
-          followers_count,
-          followings_count,
-          reposts_count
+          id: id_str,
+          created_at,
+          text,
+          retweet_count,
+          favorite_count,
+          favorited,
+          retweeted,
+          entities,
+          user: _user
         };
       }
 
@@ -204,8 +215,12 @@ class Twitter extends ApiBase {
 
   async token() {
     const source = { name: "twitter", type: "token", form: "staticitems" };
-    if (!this.granted) {
-      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
+    if (this.granted) {
+      return {
+        success: false,
+        source,
+        data: this.messages.ALREADY_EXIST
+      };
     }
     const r = await this.client.post(
       "/token",
