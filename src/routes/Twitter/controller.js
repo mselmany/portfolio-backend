@@ -68,22 +68,24 @@ class Twitter extends ApiBase {
             );
           });
         }
-
+        // DETECT UNWANTED URL AND REMOVE İF İTS NOT A CONTENT(SOUNDCLOUD, ETC.) URL
         // search its last url index (for remove or not)
         const tweet_url_idx = text.lastIndexOf("https://t.co/");
         // if it exist
         if (tweet_url_idx > -1) {
-          // extract it
+          // extract it (like "https://t.co/QWEQ2TR5")
           const tweet_url = text.substring(tweet_url_idx);
           // if tweet has url list
           if (entities.urls && entities.urls.length) {
             // then if it is same any of the url list
             const is_needed_url_exist = entities.urls.filter(({ url }) => tweet_url.includes(url));
-            // then this means, it is not a tweet url(it is a some content url, exp: Soundcloud, etc.), so do not remove from "text"
+            // then this means, it is not a tweet url(it is a some content url, exp: Soundcloud, etc.), so do not it remove from "text"
             if (!is_needed_url_exist.length) {
+              // remove unwanted url
               text = text.substring(0, tweet_url_idx - 1);
             }
           } else {
+            // remove unwanted url
             text = text.substring(0, tweet_url_idx - 1);
           }
         }
