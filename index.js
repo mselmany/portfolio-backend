@@ -23,9 +23,7 @@ function startServer() {
       const env = chalk.hex("#10a567").bold("[MODE]");
       const url = chalk.bold(`http://localhost:${port}/api/status`);
 
-      console.info(
-        `${running} 🌎  Listening on ${port}. Open up "${url}" in your browser.`
-      );
+      console.info(`${running} 🌎  Listening on ${port}. Open up "${url}" in your browser.`);
 
       // Hot Module Replacement API
       if (module.hot) {

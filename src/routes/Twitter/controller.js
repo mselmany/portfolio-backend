@@ -44,11 +44,36 @@ class Twitter extends ApiBase {
       owner = true,
       user,
       retweeted_status = null,
+      quoted_status = null,
+      quote_from = null,
       entities,
       extended_entities = null,
-      text
+      text,
+
+      in_reply_to_screen_name,
+      in_reply_to_status_id_str
     } = {}) {
-      if (retweeted_status) {
+      if (quoted_status) {
+        return {
+          ...generateItem({
+            id_str,
+            created_at,
+            retweet_count,
+            favorite_count,
+            user,
+            retweeted_status,
+            entities,
+            extended_entities,
+            text,
+            in_reply_to_screen_name,
+            in_reply_to_status_id_str
+          }),
+          quote_from: generateItem({
+            ...quoted_status,
+            owner: null
+          })
+        };
+      } else if (retweeted_status) {
         return generateItem({
           ...retweeted_status,
           owner: false,
@@ -91,7 +116,7 @@ class Twitter extends ApiBase {
         }
 
         if (entities.urls && entities.urls.length) {
-          // wrap urls with <a>
+          // wrap urls with <a href>
           entities.urls.forEach(({ url, expanded_url, display_url }) => {
             text = text.replace(url, `<a href="${expanded_url}">${display_url}</a>`);
           });
@@ -123,6 +148,14 @@ class Twitter extends ApiBase {
           );
         }
 
+        const reply_to =
+          in_reply_to_screen_name && in_reply_to_status_id_str
+            ? {
+                user_name: in_reply_to_screen_name,
+                status_id_str: in_reply_to_status_id_str
+              }
+            : null;
+
         return {
           id_str,
           owner,
@@ -133,7 +166,9 @@ class Twitter extends ApiBase {
           media,
           retweet_count,
           favorite_count,
-          user: generateUser(user)
+          user: generateUser(user),
+          quote_from,
+          reply_to
         };
       }
     }
