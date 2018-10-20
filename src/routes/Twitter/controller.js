@@ -44,36 +44,15 @@ class Twitter extends ApiBase {
       owner = true,
       user,
       retweeted_status = null,
-      quoted_status = null,
-      quote_from = null,
       entities,
       extended_entities = null,
       text,
 
+      quoted_status = null,
       in_reply_to_screen_name,
       in_reply_to_status_id_str
     } = {}) {
-      if (quoted_status) {
-        return {
-          ...generateItem({
-            id_str,
-            created_at,
-            retweet_count,
-            favorite_count,
-            user,
-            retweeted_status,
-            entities,
-            extended_entities,
-            text,
-            in_reply_to_screen_name,
-            in_reply_to_status_id_str
-          }),
-          quote_from: generateItem({
-            ...quoted_status,
-            owner: null
-          })
-        };
-      } else if (retweeted_status) {
+      if (retweeted_status) {
         return generateItem({
           ...retweeted_status,
           owner: false,
@@ -84,6 +63,16 @@ class Twitter extends ApiBase {
         if (extended_entities) {
           entities = { ...entities, ...extended_entities };
         }
+
+        const reply_url =
+          in_reply_to_screen_name && in_reply_to_status_id_str
+            ? `https://twitter.com/${in_reply_to_screen_name}/status/${in_reply_to_status_id_str}`
+            : null;
+
+        const quote_url =
+          quoted_status && quoted_status.id_str && quoted_status.user.screen_name
+            ? `https://twitter.com/${quoted_status.user.screen_name}/status/${quoted_status.id_str}`
+            : null;
 
         if (entities.user_mentions && entities.user_mentions.length) {
           entities.user_mentions.forEach(({ screen_name, name }) => {
@@ -100,8 +89,11 @@ class Twitter extends ApiBase {
         if (tweet_url_idx > -1) {
           // extract it (like "https://t.co/QWEQ2TR5")
           const tweet_url = text.substring(tweet_url_idx);
-          // if tweet has url list
-          if (entities.urls && entities.urls.length) {
+          // if url same as the quote url (then remove)
+          const remove_if_quoteurl =
+            quote_url && entities.urls.filter(({ expanded_url }) => expanded_url === quote_url);
+          // if tweet has url list and not already marked as remove
+          if (entities.urls && entities.urls.length && !remove_if_quoteurl) {
             // then if it is same any of the url list
             const is_needed_url_exist = entities.urls.filter(({ url }) => tweet_url.includes(url));
             // then this means, it is not a tweet url(it is a some content url, exp: Soundcloud, etc.), so do not it remove from "text"
@@ -148,14 +140,6 @@ class Twitter extends ApiBase {
           );
         }
 
-        const reply_to =
-          in_reply_to_screen_name && in_reply_to_status_id_str
-            ? {
-                user_name: in_reply_to_screen_name,
-                status_id_str: in_reply_to_status_id_str
-              }
-            : null;
-
         return {
           id_str,
           owner,
@@ -167,8 +151,8 @@ class Twitter extends ApiBase {
           retweet_count,
           favorite_count,
           user: generateUser(user),
-          quote_from,
-          reply_to
+          quote_url,
+          reply_url
         };
       }
     }
