@@ -29,6 +29,15 @@ class Twitter extends ApiBase {
           };
         });
       }
+      case "likes": {
+        return payload.map(item => {
+          item.owner = false;
+          return {
+            __source: { name, type, form },
+            ...generateItem(item)
+          };
+        });
+      }
 
       default: {
         return payload;
@@ -143,8 +152,8 @@ class Twitter extends ApiBase {
         return {
           id_str,
           owner,
-          created_at,
-          recreated_at,
+          created_at: new Date(created_at).getTime(),
+          recreated_at: new Date(recreated_at).getTime(),
           tweet_url: `https://twitter.com/${user.screen_name}/status/${id_str}`,
           text,
           media,
@@ -195,7 +204,7 @@ class Twitter extends ApiBase {
         followers_count,
         friends_count,
         listed_count,
-        created_at,
+        created_at: new Date(created_at).getTime(),
         favourites_count,
         verified,
         statuses_count,

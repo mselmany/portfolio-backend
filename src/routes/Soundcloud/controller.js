@@ -169,15 +169,7 @@ class Soundcloud extends ApiBase {
 
       case "comments": {
         return payload.collection.map(item => {
-          const {
-            id,
-            kind,
-            created_at,
-            user_id,
-            track_id,
-            timestamp,
-            body
-          } = item;
+          const { id, kind, created_at, user_id, track_id, timestamp, body } = item;
 
           return {
             __source: { name, type, form },
@@ -343,11 +335,7 @@ class Soundcloud extends ApiBase {
     return { success: true, source, data: Soundcloud.parser(source, r.data) };
   }
 
-  async comments({
-    limit = this.perpage,
-    linked_partitioning = 1,
-    offset
-  } = {}) {
+  async comments({ limit = this.perpage, linked_partitioning = 1, offset } = {}) {
     const source = { name: "soundcloud", type: "comments", form: "listitems" };
     if (!this.granted) {
       return { success: false, source, data: this.messages.NOT_AUTHORIZED };
@@ -362,12 +350,7 @@ class Soundcloud extends ApiBase {
     return { success: true, source, data: Soundcloud.parser(source, r.data) };
   }
 
-  async favorites({
-    limit = this.perpage,
-    linked_partitioning = 1,
-    cursor,
-    page_size
-  } = {}) {
+  async favorites({ limit = this.perpage, linked_partitioning = 1, cursor, page_size } = {}) {
     const source = { name: "soundcloud", type: "favorites", form: "listitems" };
     if (!this.granted) {
       return { success: false, source, data: this.messages.NOT_AUTHORIZED };
