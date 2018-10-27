@@ -1,5 +1,6 @@
 import { ApiBase } from "@/helpers";
 
+const YOUTUBE_PLAYLIST_ID = process.env.YOUTUBE_PLAYLIST_ID;
 const YOUTUBE_CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const API_URL = "https://www.googleapis.com/youtube/v3";
@@ -9,67 +10,91 @@ class Youtube extends ApiBase {
     super(
       { baseURL: API_URL, init: { channel_id, api_key } },
       {
-        interceptor: config =>
-          (config.params = { ...config.params, key: api_key })
+        interceptor: config => (config.params = { ...config.params, key: api_key })
       }
     );
     this.channel_id = channel_id;
+    this.playlist_id = YOUTUBE_PLAYLIST_ID;
     this.authorization = api_key;
   }
 
-  static parser(type, payload) {
-    if (!payload.items.length) {
-      return {};
+  static parser({ name, type, form }, payload) {
+    if (!payload) {
+      return [];
     }
+
+    const __source = { name, type, form };
+
     switch (type) {
       case "activities": {
-        let { items, prevPageToken, nextPageToken, pageInfo } = payload;
-        return {
-          type,
-          items: items.map(item => ({
-            id: item.id,
-            videoId: item.contentDetails.playlistItem.resourceId.videoId,
-            channel: item.snippet.channelTitle,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            publishedAt: item.snippet.publishedAt,
-            thumbnails: item.snippet.thumbnails
-          })),
-          pageInfo,
-          ...(prevPageToken && { prevPageToken }),
-          ...(nextPageToken && { nextPageToken })
-        };
+        return payload.items.map(
+          ({
+            id,
+            contentDetails,
+            snippet: {
+              channelTitle,
+              title,
+              description,
+              publishedAt,
+              thumbnails: { medium, standard }
+            }
+          }) => {
+            return {
+              __source,
+              id,
+              videoId: contentDetails.playlistItem.resourceId.videoId,
+              channel: channelTitle,
+              title,
+              // description,
+              __createdAt: new Date(publishedAt).getTime(),
+              thumbnails: standard || medium
+            };
+          }
+        );
       }
 
       case "playlist": {
-        let { items, prevPageToken, nextPageToken, pageInfo } = payload;
-        return {
-          type,
-          items: items.map(item => ({
-            id: item.id,
-            videoId: item.contentDetails.videoId,
-            channel: item.snippet.channelTitle,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            publishedAt: item.snippet.publishedAt,
-            thumbnails: item.snippet.thumbnails
-          })),
-          pageInfo,
-          ...(prevPageToken && { prevPageToken }),
-          ...(nextPageToken && { nextPageToken })
-        };
+        return payload.items.map(
+          ({
+            id,
+            contentDetails: { videoId },
+            snippet: {
+              channelTitle,
+              title,
+              description,
+              publishedAt,
+              thumbnails: { medium, standard }
+            }
+          }) => {
+            return {
+              __source,
+              id,
+              videoId,
+              channel: channelTitle,
+              title,
+              // description,
+              __createdAt: new Date(publishedAt).getTime(),
+              thumbnails: standard || medium
+            };
+          }
+        );
       }
 
       case "video": {
-        let { id, statistics, snippet, contentDetails } = payload.items[0];
-        return {
-          type,
+        let {
           id,
-          resulation: contentDetails.definition,
-          duration: contentDetails.duration,
-          categoryId: snippet.categoryId,
-          publishedAt: snippet.publishedAt,
-          tags: snippet.tags,
+          statistics,
+          snippet: { categoryId, publishedAt, tags },
+          contentDetails: { definition, duration }
+        } = payload.items[0];
+        return {
+          __source,
+          id,
+          resulation: definition,
+          duration,
+          categoryId,
+          __createdAt: new Date(publishedAt).getTime(),
+          tags,
           statistics
         };
       }
@@ -79,18 +104,10 @@ class Youtube extends ApiBase {
     }
   }
 
-  async activities({
-    limit = this.perpage,
-    pageToken,
-    publishedBefore,
-    publishedAfter
-  } = {}) {
+  async activities({ limit = this.perpage, pageToken, publishedBefore, publishedAfter } = {}) {
+    const source = { name: "youtube", type: "activities", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "youtube.activities",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     const r = await this.client.get("/activities", {
       params: {
@@ -104,26 +121,19 @@ class Youtube extends ApiBase {
         ...(publishedAfter && { publishedAfter })
       }
     });
-    return {
-      success: true,
-      class: "youtube.activities",
-      data: Youtube.parser("activities", r.data)
-    };
+    return { success: true, source, data: Youtube.parser(source, r.data) };
   }
 
   async playlist({
-    id,
+    id = this.playlist_id,
     limit = this.perpage,
     pageToken,
     publishedBefore,
     publishedAfter
   } = {}) {
+    const source = { name: "youtube", type: "playlist", form: "listitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "youtube.playlist",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ id });
     const r = await this.client.get("/playlistItems", {
@@ -139,20 +149,13 @@ class Youtube extends ApiBase {
         ...(publishedAfter && { publishedAfter })
       }
     });
-    return {
-      success: true,
-      class: "youtube.playlist",
-      data: Youtube.parser("playlist", r.data)
-    };
+    return { success: true, source, data: Youtube.parser(source, r.data) };
   }
 
   async video({ id, videoCategoryId } = {}) {
+    const source = { name: "youtube", type: "video", form: "staticitems" };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "youtube.video",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ id });
     const r = await this.client.get("/videos", {
@@ -164,29 +167,30 @@ class Youtube extends ApiBase {
         ...(videoCategoryId && { videoCategoryId })
       }
     });
-    return {
-      success: true,
-      class: "youtube.video",
-      data: Youtube.parser("video", r.data)
-    };
+    return { success: true, source, data: Youtube.parser(source, r.data) };
   }
 
   async _bucket() {
+    const source = {
+      name: "youtube",
+      type: "bucket",
+      form: "listitems"
+    };
     if (!this.granted) {
-      return {
-        success: false,
-        class: "youtube.bucket",
-        data: this.messages.NOT_AUTHORIZED
-      };
+      return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     let r = {
       activities: this.activities()
     };
+    let d = {
+      activities: await r.activities
+    };
     return {
       success: true,
-      class: "youtube.bucket",
+      source,
       data: {
-        activities: await r.activities
+        staticitems: {},
+        listitems: [...d.activities.data]
       }
     };
   }
