@@ -30,15 +30,6 @@ router.get("/likes", async function(req, res, next) {
   }
 });
 
-router.get("/collections", async function(req, res, next) {
-  try {
-    const r = await Unsplash.collections({ ...req.query });
-    res.status(200).json(r);
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.get("/statistics", async function(req, res, next) {
   try {
     const r = await Unsplash.statistics({ ...req.query });

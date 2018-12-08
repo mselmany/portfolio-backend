@@ -27,13 +27,13 @@ class Bucket {
       Unsplash
     };
 
-    this.cache = null;
+    // this.cache = null;
   }
 
   async list({ filter } = {}) {
-    if (this.cache) {
-      return this.cache;
-    }
+    // if (this.cache) {
+    //   return this.cache;
+    // }
     const filterlist = filter ? filter.toLowerCase().split(",") : false;
 
     let list = Object.entries(this.items)
@@ -51,7 +51,7 @@ class Bucket {
             ? v._bucket()
             : {
                 success: false,
-                class: "bucket.list",
+                source: { name: "bucket", type: "list", form: "listitems" },
                 data: messages.NOT_INITIALIZED
               }
         ];
@@ -73,8 +73,7 @@ class Bucket {
 
   async status() {
     let r = {};
-    Object.entries(this.items).forEach(kv => {
-      const [k, v] = kv;
+    Object.entries(this.items).forEach(([k, v]) => {
       r[k] = v.initialized && v.granted;
     });
     return r;

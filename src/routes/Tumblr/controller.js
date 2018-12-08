@@ -18,71 +18,63 @@ class Tumblr extends ApiBase {
     this.authorization = consumer_key;
   }
 
+  // TODO@1 : tumblr parser i diğerleri gibi yapılacak...
   static parser({ name, type, form }, payload) {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
-      case "user": {
+      case "bloginfo": {
         let {
-          id,
-          username,
-          permalink_url,
-          avatar_url,
-          country,
-          city,
-          full_name,
+          name,
+          title,
           description,
-          track_count,
-          playlist_count,
-          public_favorites_count,
-          followers_count,
-          followings_count,
-          reposts_count
-        } = payload;
-
+          posts,
+          likes,
+          url,
+          avatar
+        } = payload.response.blog;
         return {
-          __source: { name, type, form },
-          id,
-          username,
-          permalink_url,
-          avatar_url,
-          country,
-          city,
-          full_name,
+          __source,
+          name,
+          title,
           description,
-          track_count,
-          playlist_count,
-          public_favorites_count,
-          followers_count,
-          followings_count,
-          reposts_count
+          posts,
+          likes,
+          url,
+          avatar
         };
       }
 
-      case "comments": {
-        return payload.collection.map(item => {
-          const {
+      case "likes": {
+        return payload.response.liked_posts.map(
+          ({
+            type,
+            blog,
             id,
-            kind,
-            created_at,
-            user_id,
-            track_id,
+            post_url,
+            date,
             timestamp,
-            body
-          } = item;
-
-          return {
-            __source: { name, type, form },
-            id,
-            kind,
-            created_at: new Date(created_at).getTime(),
-            user_id,
-            track_id,
-            timestamp,
-            body
-          };
-        });
+            tags,
+            summary,
+            note_count,
+            caption,
+            image_permalink,
+            photos
+          }) => {
+            return {
+              __source,
+              id,
+              kind,
+              created_at: new Date(created_at).getTime(),
+              user_id,
+              track_id,
+              timestamp,
+              body
+            };
+          }
+        );
       }
 
       case "favorites":
@@ -290,10 +282,8 @@ class Tumblr extends ApiBase {
       success: true,
       source,
       data: {
-        staticitems: d.bloginfo.data,
-        listitems: [...d.likes.data, ...d.posts.data].sort(
-          (a, b) => b.created_at - a.created_at
-        )
+        staticitems: { bloginfo: d.bloginfo.data },
+        listitems: [...d.likes.data, ...d.posts.data]
       }
     };
   }

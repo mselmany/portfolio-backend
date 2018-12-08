@@ -21,6 +21,7 @@ class Soundcloud extends ApiBase {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
       case "user": {
         let {
@@ -41,7 +42,7 @@ class Soundcloud extends ApiBase {
         } = payload;
 
         return {
-          __source: { name, type, form },
+          __source,
           id,
           username,
           permalink_url,
@@ -62,8 +63,8 @@ class Soundcloud extends ApiBase {
       case "playlists": {
         let playlistsTracks = [];
 
-        let playlists = payload.collection.map(item => {
-          const {
+        let playlists = payload.collection.map(
+          ({
             id,
             user_id,
             tracks,
@@ -78,228 +79,134 @@ class Soundcloud extends ApiBase {
             genre,
             duration,
             description
-          } = item;
+          }) => {
+            tracks.map(item => {
+              item.playlist_id = id;
+            });
 
-          tracks.map(item => {
-            item.playlist_id = id;
-          });
+            // concat all playlist tracks
+            playlistsTracks = [...playlistsTracks, ...tracks];
 
-          playlistsTracks = [...playlistsTracks, ...tracks];
+            return {
+              __source: { ...__source, form: "staticitems" },
+              id,
+              user_id,
+              track_count,
+              title,
+              tag_list,
+              permalink_url,
+              artwork_url,
+              __createdAt: new Date(created_at).getTime(),
+              last_modified: new Date(last_modified).getTime(),
+              kind,
+              genre,
+              duration,
+              description
+            };
+          }
+        );
 
-          return {
-            __source: { name, type, form: "staticitems" },
-            id,
-            user_id,
-            track_count,
-            title,
-            tag_list,
-            permalink_url,
-            artwork_url,
-            created_at,
-            last_modified,
-            kind,
-            genre,
-            duration,
-            description
-          };
-        });
-
-        let tracks = playlistsTracks.map(item => {
-          const {
-            playlist_id,
-            id,
-            kind,
-            created_at,
-            user_id,
-            duration,
-            tag_list,
-            permalink_url,
-            artwork_url,
-            waveform_url,
-            stream_url,
-            playback_count,
-            favoritings_count,
-            comment_count,
-            purchase_url,
-            genre,
-            title,
-            description,
-            label_name,
-            original_format,
-            user
-          } = item;
-
-          return {
-            __source: { name, type, form: "listitems" },
-            playlist_id,
-            id,
-            kind,
-            created_at: new Date(created_at).getTime(),
-            user_id,
-            duration,
-            tag_list,
-            permalink_url,
-            artwork_url,
-            waveform_url,
-            stream_url,
-            playback_count,
-            favoritings_count,
-            comment_count,
-            purchase_url,
-            genre,
-            title,
-            description,
-            label_name,
-            original_format,
-            user: {
-              id: user.id,
-              username: user.username,
-              permalink_url: user.permalink_url,
-              avatar_url: user.avatar_url
-            }
-          };
-        });
+        let tracks = playlistsTracks.map(_track =>
+          parseTrack({ source: { ...__source, form: "listitems" }, ..._track })
+        );
 
         return {
-          __source: { name, type, form: "staticitems|listitems" },
-          staticitems: playlists,
+          __source,
+          staticitems: { playlists },
           listitems: tracks
         };
       }
 
       case "comments": {
-        return payload.collection.map(item => {
-          const { id, kind, created_at, user_id, track_id, timestamp, body } = item;
-
-          return {
-            __source: { name, type, form },
-            id,
-            kind,
-            created_at: new Date(created_at).getTime(),
-            user_id,
-            track_id,
-            timestamp,
-            body
-          };
-        });
+        return payload.collection.map(
+          ({ id, kind, created_at, user, track_id, timestamp, body }) => {
+            return {
+              __source,
+              id,
+              kind,
+              __createdAt: new Date(created_at).getTime(),
+              track_id,
+              stream_url: `https://api.soundcloud.com/tracks/${track_id}/stream`,
+              timestamp,
+              body,
+              user: {
+                id: user.id,
+                username: user.username,
+                permalink_url: user.permalink_url,
+                avatar_url: user.avatar_url
+              }
+            };
+          }
+        );
       }
 
       case "favorites":
       case "tracks": {
-        return payload.collection.map(item => {
-          const {
-            id,
-            kind,
-            created_at,
-            user_id,
-            duration,
-            tag_list,
-            permalink_url,
-            artwork_url,
-            waveform_url,
-            stream_url,
-            playback_count,
-            favoritings_count,
-            comment_count,
-            purchase_url,
-            genre,
-            title,
-            description,
-            label_name,
-            original_format,
-            user
-          } = item;
-
-          return {
-            __source: { name, type, form },
-            id,
-            kind,
-            created_at: new Date(created_at).getTime(),
-            user_id,
-            duration,
-            tag_list,
-            permalink_url,
-            artwork_url,
-            waveform_url,
-            stream_url,
-            playback_count,
-            favoritings_count,
-            comment_count,
-            purchase_url,
-            genre,
-            title,
-            description,
-            label_name,
-            original_format,
-            user: {
-              id: user.id,
-              username: user.username,
-              permalink_url: user.permalink_url,
-              avatar_url: user.avatar_url
-            }
-          };
-        });
+        return payload.collection.map(parseTrack);
       }
 
       case "track": {
-        const {
-          id,
-          kind,
-          created_at,
-          user_id,
-          duration,
-          tag_list,
-          permalink_url,
-          artwork_url,
-          waveform_url,
-          stream_url,
-          playback_count,
-          favoritings_count,
-          comment_count,
-          reposts_count,
-          purchase_url,
-          genre,
-          title,
-          description,
-          label_name,
-          original_format,
-          user
-        } = payload;
-
-        return {
-          __source: { name, type, form },
-          id,
-          kind,
-          created_at: new Date(created_at).getTime(),
-          user_id,
-          duration,
-          tag_list,
-          permalink_url,
-          artwork_url,
-          waveform_url,
-          stream_url,
-          playback_count,
-          favoritings_count,
-          comment_count,
-          reposts_count,
-          purchase_url,
-          genre,
-          title,
-          description,
-          label_name,
-          original_format,
-          user: {
-            id: user.id,
-            username: user.username,
-            permalink_url: user.permalink_url,
-            avatar_url: user.avatar_url
-          }
-        };
+        return parseTrack(payload);
       }
 
       default: {
         return payload;
       }
+    }
+
+    function parseTrack({
+      source = __source,
+      playlist_id,
+      id,
+      kind,
+      created_at,
+      duration,
+      tag_list,
+      permalink_url,
+      artwork_url,
+      waveform_url,
+      stream_url,
+      playback_count,
+      favoritings_count,
+      comment_count,
+      reposts_count,
+      purchase_url,
+      genre,
+      title,
+      description,
+      label_name,
+      original_format,
+      user
+    }) {
+      return {
+        __source: source,
+        playlist_id,
+        id,
+        kind,
+        __createdAt: new Date(created_at).getTime(),
+        duration,
+        tag_list,
+        permalink_url,
+        artwork_url,
+        waveform_url,
+        stream_url,
+        playback_count,
+        favoritings_count,
+        comment_count,
+        reposts_count,
+        purchase_url,
+        genre,
+        title,
+        description,
+        label_name,
+        original_format,
+        user: {
+          id: user.id,
+          username: user.username,
+          permalink_url: user.permalink_url,
+          avatar_url: user.avatar_url
+        }
+      };
     }
   }
 

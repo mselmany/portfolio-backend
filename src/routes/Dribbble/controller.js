@@ -16,46 +16,67 @@ class Dribbble extends ApiBase {
     if (!payload) {
       return [];
     }
+
+    const __source = { name, type, form };
+
     switch (type) {
       case "user": {
-        const _item = payload;
+        const {
+          id,
+          name,
+          login,
+          avatar_url,
+          bio,
+          location,
+          pro,
+          followers_count,
+          created_at,
+          links
+        } = payload;
         return {
-          __source: { name, type, form },
-          id: _item.id,
-          name: _item.name,
-          login: _item.login,
-          avatar_url: _item.avatar_url,
-          bio: _item.bio,
-          location: _item.location,
-          pro: _item.pro,
-          followers_count: _item.followers_count,
-          created_at: _item.created_at,
-          links: _item.links
+          __source,
+          id,
+          name,
+          login,
+          avatar_url,
+          bio,
+          location,
+          pro,
+          followers_count,
+          __createdAt: new Date(created_at).getTime(),
+          links
         };
       }
 
       case "shots": {
-        return payload.map(_item => ({
-          __source: {
-            name,
-            type,
-            form
-          },
-          id: _item.id,
-          title: _item.title,
-          description: _item.description,
-          html_url: _item.html_url,
-          images: _item.images,
-          tags: _item.tags,
-          published_at: _item.published_at,
-          updated_at: _item.updated_at,
-          created_at: _item.created_at,
-          attachments: _item.attachments.map(it => {
-            const { id, url, thumbnail_url, created_at } = it;
-            return { id, url, thumbnail_url, created_at };
-          }),
-          projects: _item.projects
-        }));
+        return payload.map(
+          ({
+            id,
+            title,
+            description,
+            html_url,
+            images,
+            tags,
+            published_at,
+            updated_at,
+            attachments,
+            projects
+          }) => ({
+            __source,
+            id,
+            title,
+            description,
+            html_url,
+            images,
+            tags,
+            published_at: new Date(published_at).getTime(),
+            __createdAt: new Date(updated_at).getTime(),
+            attachments: attachments.map(({ id, url, thumbnail_url, created_at }) => {
+              return { id, url, thumbnail_url, created_at: new Date(created_at).getTime() };
+            }),
+            projects
+          })
+        );
       }
 
       default:
@@ -69,10 +90,15 @@ class Dribbble extends ApiBase {
 
   // have to be redirect via authorize()
   async token({ code } = {}) {
+    const source = {
+      name: "dribbble",
+      type: "token",
+      form: "staticitems"
+    };
     if (this.granted) {
       return {
         success: false,
-        class: "dribbble.token",
+        source,
         data: this.messages.ALREADY_EXIST
       };
     }
@@ -93,7 +119,7 @@ class Dribbble extends ApiBase {
     this.authorization = `${token_type} ${access_token}`;
     return {
       success: true,
-      class: "dribbble.token",
+      source,
       data: this.messages.ACCESS_GRANTED
     };
   }
@@ -151,7 +177,7 @@ class Dribbble extends ApiBase {
     return {
       success: true,
       source,
-      data: { staticitems: d.user.data, listitems: [...d.shots.data] }
+      data: { staticitems: { user: d.user.data }, listitems: d.shots.data }
     };
   }
 }

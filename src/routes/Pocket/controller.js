@@ -24,42 +24,41 @@ class Pocket extends ApiBase {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
       case "bookmarks": {
         let { list, since } = payload;
 
-        return Object.values(list)
-          .map(item => {
-            const {
-              item_id,
-              given_url,
-              given_title,
-              favorite,
-              time_added,
-              excerpt,
-              top_image_url,
-              is_article,
-              word_count,
-              lang,
-              time_to_read
-            } = item;
-
+        return Object.values(list).map(
+          ({
+            item_id,
+            given_url,
+            given_title,
+            favorite,
+            time_added,
+            excerpt,
+            top_image_url,
+            is_article,
+            word_count,
+            lang,
+            time_to_read
+          }) => {
             return {
-              __source: { name, type, form },
+              __source,
               item_id,
               given_url,
               given_title,
               favorite: favorite === "1",
-              time_added: time_added * 1000,
+              __createdAt: time_added * 1000,
               excerpt,
               top_image_url: top_image_url || "",
               is_article: is_article === "1",
               word_count,
               lang,
-              time_to_read
+              time_to_read: time_to_read || null
             };
-          })
-          .sort((a, b) => b.time_added - a.time_added);
+          }
+        );
       }
 
       default: {
@@ -80,10 +79,15 @@ class Pocket extends ApiBase {
   }
 
   async token({ code } = {}) {
+    const source = {
+      name: "pocket",
+      type: "token",
+      form: "staticitems"
+    };
     if (this.granted) {
       return {
         success: false,
-        class: "pocket.token",
+        source,
         data: this.messages.ALREADY_EXIST
       };
     }
@@ -95,18 +99,12 @@ class Pocket extends ApiBase {
     this.authorization = r.data.access_token;
     return {
       success: true,
-      class: "pocket.token",
+      source,
       data: this.messages.ACCESS_GRANTED
     };
   }
 
-  async bookmarks({
-    detailType = "simple",
-    favorite,
-    since,
-    offset,
-    count = this.perpage
-  } = {}) {
+  async bookmarks({ detailType = "simple", favorite, since, offset, count = this.perpage } = {}) {
     const source = { name: "pocket", type: "bookmarks", form: "listitems" };
     if (!this.granted) {
       return { success: false, source, data: this.messages.NOT_AUTHORIZED };

@@ -2,14 +2,15 @@ import { ApiBase } from "@/helpers";
 
 const MEDIUM_USERNAME = process.env.MEDIUM_USERNAME;
 const API_URL = "https://medium.com/@";
+const PROFILE_IMAGE_BASE_URL = "https://miro.medium.com/fit/c/240/240/";
+const CONTENT_IMAGE_BASE_URL = "https://cdn-images-1.medium.com/max/1600/";
 
 class Medium extends ApiBase {
   constructor(username) {
     super(
       { baseURL: API_URL + username, init: { username } },
       {
-        interceptor: config =>
-          (config.params = { ...config.params, format: "json" })
+        interceptor: config => (config.params = { ...config.params, format: "json" })
       }
     );
     this.username = username;
@@ -20,6 +21,9 @@ class Medium extends ApiBase {
     if (!payload) {
       return [];
     }
+
+    const __source = { name, type, form };
+
     try {
       var data = JSON.parse(payload.replace("])}while(1);</x>", ""));
     } catch (err) {
@@ -27,22 +31,22 @@ class Medium extends ApiBase {
     }
     switch (type) {
       case "user": {
-        let { user, userMeta, references } = data.payload;
-        let { userId, username, imageId, bio } = user;
-        let { SocialStats } = references;
+        let {
+          user: { userId, name, username, imageId, bio },
+          userMeta: { numberOfPostsPublished },
+          references: { SocialStats }
+        } = data.payload;
 
-        const { numberOfPostsPublished } = userMeta;
-        const { usersFollowedCount, usersFollowedByCount } = SocialStats[
-          userId
-        ];
+        const { usersFollowedCount, usersFollowedByCount } = SocialStats[userId];
 
         return {
-          __source: { name, type, form },
+          __source,
           userId,
-          name: user.name,
+          name,
           username,
-          imageId,
+          imageId: PROFILE_IMAGE_BASE_URL + imageId,
           bio,
+          url: API_URL + username,
           usersFollowedCount,
           usersFollowedByCount,
           numberOfPostsPublished
@@ -50,67 +54,93 @@ class Medium extends ApiBase {
       }
 
       case "latest": {
-        let { Post } = data.payload.references;
-        return Object.values(Post).map(item => {
-          const { id, title, createdAt, virtuals } = item;
-          const {
-            subtitle,
-            previewImage,
-            readingTime,
-            recommends,
-            totalClapCount,
-            responsesCreatedCount
-          } = virtuals;
-
-          return {
-            __source: { name, type, form },
+        let { Post, User } = data.payload.references;
+        return Object.values(Post).map(
+          ({
             id,
             title,
             createdAt,
-            subtitle,
-            imageId: previewImage.imageId,
-            readingTime,
-            recommends,
-            totalClapCount,
-            responsesCreatedCount
-          };
-        });
+            creatorId,
+            uniqueSlug,
+            virtuals: {
+              subtitle,
+              previewImage: { imageId },
+              readingTime,
+              recommends,
+              totalClapCount,
+              responsesCreatedCount
+            }
+          }) => {
+            const _creator = User[creatorId];
+            const url = API_URL + _creator.username;
+            return {
+              __source,
+              id,
+              title,
+              url: `${url}/${uniqueSlug}`,
+              __createdAt: createdAt,
+              subtitle,
+              imageId: imageId && CONTENT_IMAGE_BASE_URL + imageId,
+              readingTime,
+              recommends,
+              totalClapCount,
+              responsesCreatedCount,
+              creator: {
+                id: creatorId,
+                name: _creator.name,
+                username: _creator.username,
+                imageId: PROFILE_IMAGE_BASE_URL + _creator.imageId,
+                bio: _creator.bio,
+                url
+              }
+            };
+          }
+        );
       }
 
       case "recommended": {
         let { Post, User } = data.payload.references;
-        return Object.values(Post).map(item => {
-          const { id, title, createdAt, creatorId, virtuals } = item;
-          const {
-            subtitle,
-            previewImage,
-            readingTime,
-            recommends,
-            totalClapCount,
-            responsesCreatedCount
-          } = virtuals;
-          const _creator = User[creatorId];
-
-          return {
-            __source: { name, type, form },
+        return Object.values(Post).map(
+          ({
             id,
             title,
             createdAt,
-            subtitle,
-            imageId: previewImage.imageId,
-            readingTime,
-            recommends,
-            totalClapCount,
-            responsesCreatedCount,
-            creator: {
-              id: creatorId,
-              name: _creator.name,
-              username: _creator.username,
-              imageId: _creator.imageId,
-              bio: _creator.bio
+            creatorId,
+            uniqueSlug,
+            virtuals: {
+              subtitle,
+              previewImage: { imageId },
+              readingTime,
+              recommends,
+              totalClapCount,
+              responsesCreatedCount
             }
-          };
-        });
+          }) => {
+            const _creator = User[creatorId];
+            const url = API_URL + _creator.username;
+            return {
+              __source,
+              id,
+              title,
+              url: `${url}/${uniqueSlug}`,
+              __createdAt: createdAt,
+              subtitle,
+              imageId: imageId && CONTENT_IMAGE_BASE_URL + imageId,
+              readingTime,
+              recommends,
+              totalClapCount,
+              responsesCreatedCount,
+              creator: {
+                id: creatorId,
+                name: _creator.name,
+                username: _creator.username,
+                imageId: PROFILE_IMAGE_BASE_URL + _creator.imageId,
+                bio: _creator.bio,
+                url
+              }
+            };
+          }
+        );
       }
 
       case "responses": {
@@ -118,32 +148,91 @@ class Medium extends ApiBase {
         let { Post, User } = references;
         return Object.values(Post)
           .filter(item => item.creatorId === user.userId)
-          .map(item => {
-            const {
+          .map(
+            ({
               id,
               inResponseToPostId,
               createdAt,
-              virtuals,
+              creatorId,
+              uniqueSlug,
+              virtuals: { readingTime, recommends, totalClapCount, responsesCreatedCount },
               previewContent
-            } = item;
-            const {
-              readingTime,
-              recommends,
-              totalClapCount,
-              responsesCreatedCount
-            } = virtuals;
+            }) => {
+              const text = previewContent.bodyModel.paragraphs.map(p => p.text);
+              const _creator = User[creatorId];
+              const url = API_URL + _creator.username;
 
-            const text = previewContent.bodyModel.paragraphs.map(p => p.text);
+              const _refPost = Post[inResponseToPostId];
+              const _refPostCreator = User[_refPost.creatorId];
+              const _refPostCreatorUrl = API_URL + _refPostCreator.username;
 
-            const _refPost = Post[inResponseToPostId];
+              const refPost = {
+                id: _refPost.id,
+                title: _refPost.title,
+                url: `${_refPostCreatorUrl}/${_refPost.uniqueSlug}`,
+                createdAt: _refPost.createdAt,
+                subtitle: _refPost.virtuals.subtitle,
+                imageId:
+                  _refPost.virtuals.previewImage.imageId &&
+                  CONTENT_IMAGE_BASE_URL + _refPost.virtuals.previewImage.imageId,
+                readingTime: _refPost.virtuals.readingTime,
+                recommends: _refPost.virtuals.recommends,
+                totalClapCount: _refPost.virtuals.totalClapCount,
+                responsesCreatedCount: _refPost.virtuals.responsesCreatedCount,
+                creator: {
+                  id: _refPost.creatorId,
+                  name: _refPostCreator.name,
+                  username: _refPostCreator.username,
+                  imageId: PROFILE_IMAGE_BASE_URL + _refPostCreator.imageId,
+                  bio: _refPostCreator.bio,
+                  url: _refPostCreatorUrl
+                }
+              };
+
+              return {
+                __source,
+                id,
+                url: `${url}/${uniqueSlug}`,
+                __createdAt: createdAt,
+                readingTime,
+                recommends,
+                totalClapCount,
+                responsesCreatedCount,
+                refPost,
+                text,
+                creator: {
+                  id: creatorId,
+                  name: _creator.name,
+                  username: _creator.username,
+                  imageId: PROFILE_IMAGE_BASE_URL + _creator.imageId,
+                  bio: _creator.bio,
+                  url
+                }
+              };
+            }
+          );
+      }
+
+      case "highlights": {
+        const { Quote, User, Post } = data.payload.references;
+        return Object.values(Quote).map(
+          ({ postId, quoteId, createdAt, quoteParagraphPreview: { text }, userId }) => {
+            const _creator = User[userId];
+            const url = API_URL + _creator.username;
+
+            const _refPost = Post[postId];
             const _refPostCreator = User[_refPost.creatorId];
+            const _refPostCreatorUrl = API_URL + _refPostCreator.username;
 
             const refPost = {
               id: _refPost.id,
               title: _refPost.title,
+              url: `${_refPostCreatorUrl}/${_refPost.uniqueSlug}`,
               createdAt: _refPost.createdAt,
               subtitle: _refPost.virtuals.subtitle,
-              imageId: _refPost.virtuals.previewImage.imageId,
+              imageId:
+                _refPost.virtuals.previewImage.imageId &&
+                CONTENT_IMAGE_BASE_URL + _refPost.virtuals.previewImage.imageId,
               readingTime: _refPost.virtuals.readingTime,
               recommends: _refPost.virtuals.recommends,
               totalClapCount: _refPost.virtuals.totalClapCount,
@@ -152,55 +241,30 @@ class Medium extends ApiBase {
                 id: _refPost.creatorId,
                 name: _refPostCreator.name,
                 username: _refPostCreator.username,
-                imageId: _refPostCreator.imageId,
-                bio: _refPostCreator.bio
+                imageId: PROFILE_IMAGE_BASE_URL + _refPostCreator.imageId,
+                bio: _refPostCreator.bio,
+                url: _refPostCreatorUrl
               }
             };
 
             return {
-              __source: { name, type, form },
-              id,
-              createdAt,
-              readingTime,
-              recommends,
-              totalClapCount,
-              responsesCreatedCount,
+              __source,
+              id: quoteId,
+              url: `https://medium.com/p/${postId}`,
+              __createdAt: createdAt,
+              text,
               refPost,
-              text
-            };
-          });
-      }
-
-      case "highlights": {
-        let { Quote, User, Post } = data.payload.references;
-        return Object.values(Quote).map(item => {
-          let _post = Post[item.postId];
-          let _creator = User[_post.creatorId];
-
-          return {
-            __source: { name, type, form },
-            id: item.quoteId,
-            createdAt: item.createdAt,
-            text: item.quoteParagraphPreview.text,
-            post: {
-              id: _post.id,
-              title: _post.title,
-              createdAt: _post.createdAt,
-              subtitle: _post.virtuals.subtitle,
-              imageId: _post.virtuals.previewImage.imageId,
-              readingTime: _post.virtuals.readingTime,
-              recommends: _post.virtuals.recommends,
-              totalClapCount: _post.virtuals.totalClapCount,
-              responsesCreatedCount: _post.virtuals.responsesCreatedCount,
               creator: {
                 id: _creator.userId,
                 name: _creator.name,
                 username: _creator.username,
-                imageId: _creator.imageId
+                imageId: PROFILE_IMAGE_BASE_URL + _creator.imageId,
+                bio: _creator.bio,
+                url
               }
-            }
-          };
-        });
+            };
+          }
+        );
       }
 
       default: {
@@ -282,13 +346,13 @@ class Medium extends ApiBase {
       success: true,
       source,
       data: {
-        staticitems: d.user.data,
+        staticitems: { user: d.user.data },
         listitems: [
           ...d.latest.data,
           ...d.recommended.data,
           ...d.responses.data,
           ...d.highlights.data
-        ].sort((a, b) => b.createdAt - a.createdAt)
+        ]
       }
     };
   }

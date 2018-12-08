@@ -13,18 +13,21 @@ class Twitter extends ApiBase {
       init: { username, consumer_key, consumer_secret }
     });
     this.username = username;
-    this.credentials = new Buffer(`${consumer_key}:${consumer_secret}`).toString("base64");
+    this.credentials = new Buffer(
+      `${consumer_key}:${consumer_secret}`
+    ).toString("base64");
   }
 
   static parser({ name, type, form }, payload) {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
       case "timeline": {
         return payload.map(item => {
           return {
-            __source: { name, type, form },
+            __source,
             ...generateItem(item)
           };
         });
@@ -33,7 +36,7 @@ class Twitter extends ApiBase {
         return payload.map(item => {
           item.owner = false;
           return {
-            __source: { name, type, form },
+            __source,
             ...generateItem(item)
           };
         });
@@ -47,7 +50,7 @@ class Twitter extends ApiBase {
     function generateItem({
       id_str,
       created_at,
-      recreated_at = created_at,
+      __createdAt = created_at,
       retweet_count,
       favorite_count,
       owner = true,
@@ -65,10 +68,10 @@ class Twitter extends ApiBase {
         return generateItem({
           ...retweeted_status,
           owner: false,
-          recreated_at: created_at
+          __createdAt: created_at
         });
       } else {
-        let media;
+        let media = null;
         if (extended_entities) {
           entities = { ...entities, ...extended_entities };
         }
@@ -79,8 +82,12 @@ class Twitter extends ApiBase {
             : null;
 
         const quote_url =
-          quoted_status && quoted_status.id_str && quoted_status.user.screen_name
-            ? `https://twitter.com/${quoted_status.user.screen_name}/status/${quoted_status.id_str}`
+          quoted_status &&
+          quoted_status.id_str &&
+          quoted_status.user.screen_name
+            ? `https://twitter.com/${quoted_status.user.screen_name}/status/${
+                quoted_status.id_str
+              }`
             : null;
 
         if (entities.user_mentions && entities.user_mentions.length) {
@@ -100,11 +107,16 @@ class Twitter extends ApiBase {
           const tweet_url = text.substring(tweet_url_idx);
           // if url same as the quote url (then remove)
           const remove_if_quoteurl =
-            quote_url && entities.urls.filter(({ expanded_url }) => expanded_url === quote_url);
+            quote_url &&
+            entities.urls.filter(
+              ({ expanded_url }) => expanded_url === quote_url
+            );
           // if tweet has url list and not already marked as remove
           if (entities.urls && entities.urls.length && !remove_if_quoteurl) {
             // then if it is same any of the url list
-            const is_needed_url_exist = entities.urls.filter(({ url }) => tweet_url.includes(url));
+            const is_needed_url_exist = entities.urls.filter(({ url }) =>
+              tweet_url.includes(url)
+            );
             // then this means, it is not a tweet url(it is a some content url, exp: Soundcloud, etc.), so do not it remove from "text"
             if (!is_needed_url_exist.length) {
               // remove unwanted url
@@ -119,13 +131,23 @@ class Twitter extends ApiBase {
         if (entities.urls && entities.urls.length) {
           // wrap urls with <a href>
           entities.urls.forEach(({ url, expanded_url, display_url }) => {
-            text = text.replace(url, `<a href="${expanded_url}">${display_url}</a>`);
+            text = text.replace(
+              url,
+              `<a href="${expanded_url}">${display_url}</a>`
+            );
           });
         }
 
         if (entities.media && entities.media.length) {
           media = entities.media.map(
-            ({ id_str, media_url_https, url, display_url, type, video_info }) => {
+            ({
+              id_str,
+              media_url_https,
+              url,
+              display_url,
+              type,
+              video_info
+            }) => {
               if (video_info) {
                 let { aspect_ratio, duration_millis, variants } = video_info;
 
@@ -153,7 +175,7 @@ class Twitter extends ApiBase {
           id_str,
           owner,
           created_at: new Date(created_at).getTime(),
-          recreated_at: new Date(recreated_at).getTime(),
+          __createdAt: new Date(__createdAt).getTime(),
           tweet_url: `https://twitter.com/${user.screen_name}/status/${id_str}`,
           text,
           media,
@@ -191,9 +213,14 @@ class Twitter extends ApiBase {
       }
 
       if (description && entities.description.urls.length) {
-        entities.description.urls.forEach(({ url, expanded_url, display_url }) => {
-          description = description.replace(url, `<a href="${expanded_url}">${display_url}</a>`);
-        });
+        entities.description.urls.forEach(
+          ({ url, expanded_url, display_url }) => {
+            description = description.replace(
+              url,
+              `<a href="${expanded_url}">${display_url}</a>`
+            );
+          }
+        );
       }
 
       return {
@@ -204,7 +231,7 @@ class Twitter extends ApiBase {
         followers_count,
         friends_count,
         listed_count,
-        created_at: new Date(created_at).getTime(),
+        __createdAt: new Date(created_at).getTime(),
         favourites_count,
         verified,
         statuses_count,
@@ -226,13 +253,17 @@ class Twitter extends ApiBase {
         data: this.messages.ALREADY_EXIST
       };
     }
-    const r = await this.client.post("/token", "grant_type=client_credentials", {
-      baseURL: AUTH_URL,
-      headers: {
-        Authorization: `Basic ${this.credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+    const r = await this.client.post(
+      "/token",
+      "grant_type=client_credentials",
+      {
+        baseURL: AUTH_URL,
+        headers: {
+          Authorization: `Basic ${this.credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        }
       }
-    });
+    );
     const { token_type, access_token } = r.data;
     this.authorization = `${token_type} ${access_token}`;
     return { success: true, source, data: this.messages.ACCESS_GRANTED };
@@ -248,13 +279,17 @@ class Twitter extends ApiBase {
       return { success: false, source, data: this.messages.NOT_AUTHORIZED };
     }
     this.required({ access_token });
-    await this.client.post("/invalidate_token", `access_token=${access_token}`, {
-      baseURL: AUTH_URL,
-      headers: {
-        Authorization: `Basic ${this.credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded;"
+    await this.client.post(
+      "/invalidate_token",
+      `access_token=${access_token}`,
+      {
+        baseURL: AUTH_URL,
+        headers: {
+          Authorization: `Basic ${this.credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded;"
+        }
       }
-    });
+    );
     await this.token();
     return { success: true, source, data: this.messages.ACCESS_GRANTED };
   }
@@ -290,7 +325,13 @@ class Twitter extends ApiBase {
     return { success: true, source, data: Twitter.parser(source, r.data) };
   }
 
-  async likes({ user_id, since_id, count = this.perpage, max_id, include_rts } = {}) {
+  async likes({
+    user_id,
+    since_id,
+    count = this.perpage,
+    max_id,
+    include_rts
+  } = {}) {
     const source = { name: "twitter", type: "likes", form: "listitems" };
     if (!this.granted) {
       return { success: false, source, data: this.messages.NOT_AUTHORIZED };
@@ -331,12 +372,14 @@ class Twitter extends ApiBase {
       source,
       data: {
         staticitems: {},
-        listitems: [...d.timeline.data, ...d.likes.data].sort(
-          (a, b) => b.recreated_at - a.recreated_at
-        )
+        listitems: [...d.timeline.data, ...d.likes.data]
       }
     };
   }
 }
 
-export default new Twitter(TWITTER_USERNAME, TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET);
+export default new Twitter(
+  TWITTER_USERNAME,
+  TWITTER_CONSUMER_KEY,
+  TWITTER_CONSUMER_SECRET
+);

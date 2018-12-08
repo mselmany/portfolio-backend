@@ -17,16 +17,18 @@ class Instagram extends ApiBase {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
       case "user": {
-        payload.data.__source = { name, type, form };
+        payload.data.__source = __source;
         return payload.data;
       }
 
       case "media": {
-        return payload.data.map(_item => {
-          const {
+        return payload.data.map(
+          ({
             id,
+            type,
             created_time,
             caption,
             likes,
@@ -39,55 +41,49 @@ class Instagram extends ApiBase {
             images,
             videos,
             carousel_media
-          } = _item;
+          }) => {
+            let media = [];
+            switch (type) {
+              case "carousel": {
+                media = carousel_media.map(({ type, videos, images }) => {
+                  return {
+                    type,
+                    content: (type === "video" ? videos : images).standard_resolution.url
+                  };
+                });
+                break;
+              }
 
-          let media = [];
-          switch (_item.type) {
-            case "carousel": {
-              media = carousel_media.map(it => {
-                return {
-                  type: it.type,
-                  content:
-                    it[it.type === "video" ? "videos" : "images"]
-                      .standard_resolution.url
-                };
-              });
-              break;
+              case "image": {
+                media = [{ type, content: images.standard_resolution.url }];
+                break;
+              }
+
+              case "video": {
+                media = [{ type, content: videos.standard_resolution.url }];
+                break;
+              }
+
+              default:
+                break;
             }
 
-            case "image": {
-              media = [
-                { type: _item.type, content: images.standard_resolution.url }
-              ];
-              break;
-            }
-
-            case "video": {
-              media = [
-                { type: _item.type, content: videos.standard_resolution.url }
-              ];
-              break;
-            }
-
-            default:
-              break;
+            return {
+              __source,
+              id,
+              __createdAt: created_time * 1000,
+              text: caption && caption.text,
+              likes: likes.count,
+              comments: comments.count,
+              tags,
+              link,
+              location: location && location.name,
+              filter,
+              users_in_photo: users_in_photo.map(it => it.user.username),
+              media
+            };
           }
-
-          return {
-            __source: { name, type, form },
-            id,
-            created_time,
-            text: caption && caption.text,
-            likes: likes.count,
-            comments: comments.count,
-            tags,
-            link,
-            location: location && location.name,
-            filter,
-            users_in_photo: users_in_photo.map(it => it.user.username),
-            media
-          };
-        });
+        );
       }
 
       default:
@@ -111,10 +107,15 @@ class Instagram extends ApiBase {
 
   // have to be redirect via authorize({ redirect_uri })
   async token({ code } = {}) {
+    const source = {
+      name: "instagram",
+      type: "token",
+      form: "staticitems"
+    };
     if (this.granted) {
       return {
         success: false,
-        class: "instagram.token",
+        source,
         data: this.messages.ALREADY_EXIST
       };
     }
@@ -136,11 +137,7 @@ class Instagram extends ApiBase {
       }
     });
     this.authorization = r.data.access_token;
-    return {
-      success: true,
-      class: "instagram.token",
-      data: this.messages.ACCESS_GRANTED
-    };
+    return { success: true, source, data: this.messages.ACCESS_GRANTED };
   }
 
   async user() {
@@ -193,7 +190,7 @@ class Instagram extends ApiBase {
     return {
       success: true,
       source,
-      data: { staticitems: d.user.data, listitems: d.media.data }
+      data: { staticitems: { user: d.user.data }, listitems: d.media.data }
     };
   }
 }

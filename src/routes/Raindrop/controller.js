@@ -14,6 +14,7 @@ class Raindrop extends ApiBase {
     if (!payload) {
       return [];
     }
+    const __source = { name, type, form };
     switch (type) {
       case "collection": {
         let {
@@ -29,56 +30,46 @@ class Raindrop extends ApiBase {
         } = payload.item;
 
         return {
-          __source: { name, type, form },
+          __source,
           _id,
           title,
           user: user.$id,
           excerpt,
           background,
-          created,
+          __createdAt: new Date(created).getTime(),
           count,
           shortLink,
-          cover: cover && cover.length && cover[0]
+          cover: cover && cover.length && "https://raindrop.io" + cover[0]
         };
       }
 
       case "bookmarks": {
         let { items, collectionId } = payload;
-        return items.map(item => {
-          const {
-            _id,
-            user,
-            link,
-            title,
-            excerpt,
-            cover,
-            domain,
-            lastUpdate,
-            tags,
-            media
-          } = item;
-
-          return {
-            __source: { name, type, form },
-            collectionId,
-            type: item.type,
-            _id,
-            user: user.$id,
-            link,
-            title,
-            excerpt,
-            cover,
-            domain,
-            lastUpdate,
-            tags,
-            media
-          };
-        });
+        return items.map(
+          ({ _id, type, user, link, title, excerpt, cover, domain, lastUpdate, tags, media }) => {
+            return {
+              __source,
+              collectionId,
+              type,
+              id: _id,
+              user: user.$id,
+              link,
+              title,
+              excerpt,
+              cover,
+              domain,
+              __createdAt: new Date(lastUpdate).getTime(),
+              tags,
+              media
+            };
+          }
+        );
       }
 
       case "bookmark": {
         const {
           collection,
+          type,
           _id,
           user,
           link,
@@ -92,17 +83,17 @@ class Raindrop extends ApiBase {
         } = payload.item;
 
         return {
-          __source: { name, type, form },
+          __source,
           collectionId: collection.$id,
-          type: payload.item.type,
-          _id,
+          type,
+          id: _id,
           user: user.$id,
           link,
           title,
           excerpt,
           cover,
           domain,
-          lastUpdate,
+          __createdAt: new Date(lastUpdate).getTime(),
           tags,
           media
         };
@@ -181,7 +172,7 @@ class Raindrop extends ApiBase {
       success: true,
       source,
       data: {
-        staticitems: d.collection.data,
+        staticitems: { collection: d.collection.data },
         listitems: d.bookmarks.data
       }
     };

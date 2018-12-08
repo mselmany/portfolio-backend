@@ -14,123 +14,155 @@ class Github extends ApiBase {
     if (!payload) {
       return [];
     }
+
+    const __source = { name, type, form };
+
     switch (type) {
       case "user": {
-        var _item = payload;
+        var {
+          id,
+          name,
+          login,
+          avatar_url,
+          bio,
+          created_at,
+          updated_at,
+          followers,
+          following,
+          location,
+          public_gists,
+          public_repos,
+          html_url
+        } = payload;
         return {
-          __source: { name, type, form },
-          id: _item.id,
-          name: _item.name,
-          login: _item.login,
-          avatar_url: _item.avatar_url,
-          bio: _item.bio,
-          created_at: _item.created_at,
-          updated_at: _item.updated_at,
-          followers: _item.followers,
-          following: _item.following,
-          location: _item.location,
-          public_gists: _item.public_gists,
-          public_repos: _item.public_repos,
-          html_url: _item.html_url
+          __source,
+          id,
+          name,
+          login,
+          avatar_url,
+          bio,
+          __createdAt: new Date(created_at).getTime(),
+          updated_at: new Date(updated_at).getTime(),
+          followers,
+          following,
+          location,
+          public_gists,
+          public_repos,
+          html_url
         };
       }
 
       case "events": {
-        return payload.map(_item => ({
-          __source: {
-            name,
+        return payload.map(
+          ({ id, type, created_at, action, repo, actor: { id: _id, login, avatar_url } }) => ({
+            __source,
+            id,
             type,
-            form
-          },
-          id: _item.id,
-          type: _item.type,
-          created_at: _item.created_at,
-          action: _item.payload.action,
-          repo: _item.repo,
-          actor: {
-            id: _item.actor.id,
-            login: _item.actor.login,
-            avatar_url: _item.actor.avatar_url
-          }
-        }));
+            __createdAt: new Date(created_at).getTime(),
+            action,
+            repo,
+            actor: { id: _id, login, avatar_url }
+          })
+        );
       }
 
       case "watchers": {
-        return payload.map(_item => ({
-          __source: {
+        return payload.map(
+          ({
+            id,
             name,
-            type,
-            form
-          },
-          id: _item.id,
-          name: _item.name,
-          full_name: _item.full_name,
-          html_url: _item.html_url,
-          description: _item.description,
-          created_at: _item.created_at,
-          updated_at: _item.updated_at,
-          pushed_at: _item.pushed_at,
-          homepage: _item.homepage,
-          stargazers_count: _item.stargazers_count,
-          watchers_count: _item.watchers_count,
-          forks_count: _item.forks_count,
-          language: _item.language,
-          owner: {
-            id: _item.owner.id,
-            login: _item.owner.login,
-            avatar_url: _item.owner.avatar_url
-          }
-        }));
+            full_name,
+            html_url,
+            description,
+            created_at,
+            updated_at,
+            pushed_at,
+            homepage,
+            stargazers_count,
+            watchers_count,
+            forks_count,
+            language,
+            owner: { id: _id, login, avatar_url }
+          }) => ({
+            __source,
+            id,
+            name,
+            full_name,
+            html_url,
+            description,
+            __createdAt: new Date(created_at).getTime(),
+            updated_at: new Date(updated_at).getTime(),
+            pushed_at: new Date(pushed_at).getTime(),
+            homepage,
+            stargazers_count,
+            watchers_count,
+            forks_count,
+            language,
+            owner: { id: _id, login, avatar_url }
+          })
+        );
       }
 
       case "stars": {
-        return payload.map(_item => ({
-          __source: {
+        return payload.map(
+          ({
+            id,
             name,
-            type,
-            form
-          },
-          id: _item.id,
-          name: _item.name,
-          full_name: _item.full_name,
-          html_url: _item.html_url,
-          description: _item.description,
-          created_at: _item.created_at,
-          updated_at: _item.updated_at,
-          pushed_at: _item.pushed_at,
-          homepage: _item.homepage,
-          stargazers_count: _item.stargazers_count,
-          watchers_count: _item.watchers_count,
-          forks_count: _item.forks_count,
-          language: _item.language,
-          owner: {
-            id: _item.owner.id,
-            login: _item.owner.login,
-            avatar_url: _item.owner.avatar_url
-          }
-        }));
+            full_name,
+            html_url,
+            description,
+            created_at,
+            updated_at,
+            pushed_at,
+            homepage,
+            stargazers_count,
+            watchers_count,
+            forks_count,
+            language,
+            owner: { id: _id, login, avatar_url }
+          }) => ({
+            __source,
+            id,
+            name,
+            full_name,
+            html_url,
+            description,
+            __createdAt: new Date(created_at).getTime(),
+            updated_at: new Date(updated_at).getTime(),
+            pushed_at: new Date(pushed_at).getTime(),
+            homepage,
+            stargazers_count,
+            watchers_count,
+            forks_count,
+            language,
+            owner: { id: _id, login, avatar_url }
+          })
+        );
       }
 
       case "gists": {
-        return payload.map(_item => ({
-          __source: {
-            name,
-            type,
-            form
-          },
-          id: _item.id,
-          html_url: _item.html_url,
-          created_at: _item.created_at,
-          updated_at: _item.updated_at,
-          description: _item.description,
-          comments: _item.comments,
-          files: Object.keys(_item.files),
-          owner: {
-            id: _item.owner.id,
-            login: _item.owner.login,
-            avatar_url: _item.owner.avatar_url
-          }
-        }));
+        return payload.map(
+          ({
+            id,
+            html_url,
+            created_at,
+            updated_at,
+            description,
+            comments,
+            files,
+            owner: { id: _id, login, avatar_url }
+          }) => ({
+            __source,
+            id,
+            html_url,
+            __createdAt: new Date(created_at).getTime(),
+            updated_at: new Date(updated_at).getTime(),
+            description,
+            comments,
+            files: Object.keys(files),
+            owner: { id: _id, login, avatar_url }
+          })
+        );
       }
 
       default:
@@ -268,13 +300,8 @@ class Github extends ApiBase {
       success: true,
       source,
       data: {
-        staticitems: d.user.data,
-        listitems: [
-          ...d.events.data,
-          ...d.watchers.data,
-          ...d.gists.data,
-          ...d.stars.data
-        ]
+        staticitems: { user: d.user.data },
+        listitems: [...d.events.data, ...d.watchers.data, ...d.gists.data, ...d.stars.data]
       }
     };
   }

@@ -22,9 +22,7 @@ class Youtube extends ApiBase {
     if (!payload) {
       return [];
     }
-
     const __source = { name, type, form };
-
     switch (type) {
       case "activities": {
         return payload.items.map(
