@@ -6,10 +6,10 @@
   "author": "numano <mselmany@hotmail.com>",
   "license": "MIT",
   "private": true,
-  "homepage": "https://bitbucket.org/mselmany/portfolio-backend#readme",
+  "homepage": "https://github.com/mselmany/portfolio-backend",
   "repository": {
     "type": "git",
-    "url": "git+https://mselmany@bitbucket.org/mselmany/portfolio-backend.git"
+    "url": "git+https://github.com/mselmany/portfolio-backend.git"
   },
   "keywords": [
     "backend",

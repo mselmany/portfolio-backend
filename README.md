@@ -9,7 +9,7 @@
 npm install
 
 # serve with hot reload(node-hot) at localhost:3000
-npm run start
+npm run serve
 
 # build for production
 npm run build
